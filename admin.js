@@ -74,9 +74,8 @@ function previewAndProcessImage(event) {
     reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
-            // Компресия на изображението чрез Canvas елемент
             const canvas = document.createElement("canvas");
-            const MAX_WIDTH = 1024; // Оптимален размер за мобилен екран
+            const MAX_WIDTH = 1024;
             let width = img.width;
             let height = img.height;
 
@@ -90,14 +89,13 @@ function previewAndProcessImage(event) {
             const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, width, height);
 
-            // Намаляване на качеството до 70% за драстично пестене на място
-            const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+            const compressedBase64 = canvas.toToDataURL ? canvas.toDataURL("image/jpeg", 0.7) : canvas.toDataURL("image/jpeg");
 
             try {
                 localStorage.setItem("paperMenuImage", compressedBase64);
                 showImagePreview(compressedBase64);
             } catch (error) {
-                alert("Паметта на браузъра е пълна. Моля, изтрийте други елементи.");
+                alert("Паметта на браузъра е пълна. Изберете по-малка снимка.");
                 console.error(error);
             }
         };
@@ -122,7 +120,7 @@ function removePaperMenu() {
         const manualSection = document.getElementById("manual-entry-section");
         
         if (container) container.classList.add("hidden");
-        if (manualSection) manualSection.remove("opacity-40");
+        if (manualSection) manualSection.classList.remove("opacity-40");
         document.getElementById('camera-input').value = '';
     }
 }
