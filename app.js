@@ -1,7 +1,3 @@
-const restaurantName = localStorage.getItem("restaurantName") || "Нашето заведение";
-const paperMenu = localStorage.getItem("paperMenuImage");
-
-// Динамично извличане на данните при всяко повикване
 function getFreshMenuData() {
     return JSON.parse(localStorage.getItem("restaurantMenu")) || [];
 }
@@ -11,13 +7,14 @@ let currentLang = localStorage.getItem("clientLanguage") || "bg";
 const translations = {
     bg: { subtitle: "Дигитално меню", available: "● Налично", empty: "Всички", outOfStock: "✕ Изчерпано", zoomTip: "Можете да приближите снимката с два пръста (pinch-to-zoom)", paperTitle: "📄 Разгледайте нашето хартиено меню", noItems: "Все още няма въведени артикули." },
     en: { subtitle: "Digital Menu", available: "● Available", empty: "All", outOfStock: "✕ Out of stock", zoomTip: "You can zoom in with two fingers (pinch-to-zoom)", paperTitle: "📄 View our paper menu", noItems: "No items found in this category." },
-    el: { subtitle: "Ψηφιακό Μενού", available: "● Διαθέσιμο", empty: "Όλα", outOfStock: "✕ Εξαντλήθηκε", zoomTip: "Μπορείτε να μεγεθύνετε με δύο δάχτυλα (pinch-to-zoom)", paperTitle: "📄 Δείτε το έντυπο μενού μας", noItems: "Δεν βρέθηκαν προϊόντα σε αυτήν την κατηγορία." },
+    el: { subtitle: "Ψηфιακό Μενού", available: "● Διαθέσιμο", empty: "Όλα", outOfStock: "✕ Εξαντλήθηκε", zoomTip: "Μπορείτε να μεγεθύνετε με δύο δάχτυλα (pinch-to-zoom)", paperTitle: "📄 Δείτε το έντυπο μενού μας", noItems: "Δεν βρέθηκαν προϊόντα σε αυτήν την κατηγορία." },
     ru: { subtitle: "Цифровое меню", available: "● В наличии", empty: "Все", outOfStock: "✕ Нет в наличии", zoomTip: "Вы можете увеличить изображение двумя пальцами (pinch-to-zoom)", paperTitle: "📄 Посмотреть наше бумажное меню", noItems: "В этой категории пока нет товаров." },
     pl: { subtitle: "Cyfrowe Menu", available: "● Dostępny", empty: "Wszystko", outOfStock: "✕ Brak", zoomTip: "Możesz powiększyć dwoma palcami (pinch-to-zoom)", paperTitle: "📄 Zobacz nasze menu papierowe", noItems: "Brak artykułów w tej kategorii." },
-    tr: { subtitle: "Dijital Menü", available: "● Mevcut", empty: "Hepsi", outOfStock: "✕ Tükendi", zoomTip: "İki parmağınızla yakınlaştırabilirsiniz (pinch-to-zoom)", paperTitle: "📄 Kağıt menümüzü görüntüleyin", noItems: "Buategoride henüz ürün bulunmamaktadır." }
+    tr: { subtitle: "Dijital Menü", available: "● Mevcut", empty: "Hepsi", outOfStock: "✕ Tükendi", zoomTip: "İki parмаğınızla yakınlaştırabilirsiniz (pinch-to-zoom)", paperTitle: "📄 Kağıt menümüzü görüntüleyin", noItems: "Bu kategoride henüz ürün bulunmamaktadır." }
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+    const restaurantName = localStorage.getItem("restaurantName") || "Нашето заведение";
     const langSelect = document.getElementById("language-select");
     if (langSelect) langSelect.value = currentLang;
     const headerTitle = document.querySelector("header h1");
@@ -30,6 +27,9 @@ function initMenu() {
     const nav = document.getElementById("categories-nav");
     const subTitle = document.getElementById("sub-title");
     if (subTitle) subTitle.innerText = translations[currentLang].subtitle;
+
+    // Вземаме снимката в реално време при инициализация
+    const paperMenu = localStorage.getItem("paperMenuImage");
 
     if (paperMenu) {
         if (nav) nav.style.display = "none"; 
