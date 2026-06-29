@@ -6,6 +6,8 @@
     <title>Контролен Панел - Меню</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Парсер за Excel/CSV файлове (PapaParse) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans text-gray-800 antialiased">
 
@@ -18,20 +20,30 @@
 
     <main class="max-w-4xl mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        <!-- ЛЯВА КОЛОНА: НАСТРОЙКИ И ДОБАВЯНЕ -->
+        <!-- ЛЯВА КОЛОНА: НАСТРОЙКИ, ТЕМИ И ИМПОРТ -->
         <div class="space-y-6">
-            <!-- Име на ресторанта -->
-            <div class="bg-white p-5 rounded-2xl shadow-xs border border-gray-100">
-                <h2 class="text-base font-bold text-gray-700 mb-3">Име на заведението</h2>
-                <div class="flex gap-2">
-                    <input type="text" id="restaurant-name-input" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-amber-500" placeholder="Въведете име">
-                    <button onclick="saveRestaurantName()" class="bg-slate-700 hover:bg-slate-800 text-white px-4 rounded-xl text-sm font-semibold transition">Запази</button>
+            
+            <!-- СЕКЦИЯ: ИЗБОР НА ФОН / ТЕМА -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                <h2 class="text-base font-bold text-gray-700 mb-3">🎨 Дизайн на клиентското меню</h2>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="setTheme('amber')" class="p-3 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition">Класически Кехлибар</button>
+                    <button onclick="setTheme('sea')" class="p-3 bg-cyan-500 hover:bg-cyan-600 text-white text-xs font-bold rounded-xl transition">Морски Бриз 🏖️</button>
+                    <button onclick="setTheme('forest')" class="p-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition">Горско Зелено</button>
+                    <button onclick="setTheme('dark')" class="p-3 bg-gray-800 hover:bg-gray-900 text-white text-xs font-bold rounded-xl transition">Модерна Тъмна</button>
                 </div>
             </div>
 
-            <!-- Форма за добавяне на ястие -->
-            <div id="manual-entry-section" class="bg-white p-5 rounded-2xl shadow-xs border border-gray-100 transition-opacity duration-300">
-                <h2 class="text-base font-bold text-gray-700 mb-4">Добавяне на нов артикул</h2>
+            <!-- СЕКЦИЯ: ИМПОРТ ОТ EXCEL / CSV ДОКУМЕНТ -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                <h2 class="text-base font-bold text-gray-700 mb-2">📊 Професионален импорт от файл</h2>
+                <p class="text-xs text-gray-400 mb-3">Качете `.csv` или текстов файл с колони: Име, Категория, Цена, Описание.</p>
+                <input type="file" id="csv-file-input" accept=".csv,.txt" onchange="importMenuFromFile(event)" class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+            </div>
+
+            <!-- Форма за ръчно добавяне -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                <h2 class="text-base font-bold text-gray-700 mb-4">Добавяне на единичен артикул</h2>
                 <form id="add-dish-form" class="space-y-3">
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1">Име на ястието</label>
@@ -49,13 +61,9 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Цена (&euro;)</label>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Цена (€)</label>
                             <input type="number" id="dish-price" step="0.01" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-amber-500" placeholder="0.00">
                         </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-500 mb-1">URL Снимка (по избор)</label>
-                        <input type="text" id="dish-image" value="https://via.placeholder.com/150" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-amber-500">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1">Описание / Алергени</label>
@@ -64,30 +72,66 @@
                     <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-sm mt-2">Добави в менюто</button>
                 </form>
             </div>
-
-            <!-- Секция за хартиено меню -->
-            <div class="bg-white p-5 rounded-2xl shadow-xs border border-gray-100">
-                <h2 class="text-base font-bold text-gray-700 mb-2">Бърз режим: Снимка на меню</h2>
-                <p class="text-xs text-gray-400 mb-3">Качете снимка, за да замените изцяло дигиталното въвеждане.</p>
-                <input type="file" id="camera-input" accept="image/*" onchange="previewAndProcessImage(event)" class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 cursor-pointer">
-                
-                <div id="image-preview-container" class="mt-4 hidden p-2 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                    <img id="image-preview" src="" class="w-full h-auto max-h-40 object-cover rounded-lg">
-                    <button onclick="removePaperMenu()" class="w-full mt-2 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold py-1.5 rounded-lg transition">Изтриване на заснетото хартиено меню</button>
-                </div>
-            </div>
         </div>
 
         <!-- ДЯСНА КОЛОНА: СПИСЪК С АРТИКУЛИ -->
-        <div class="bg-white p-5 rounded-2xl shadow-xs border border-gray-100 flex flex-col h-full">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full">
             <h2 class="text-base font-bold text-gray-700 mb-3 pb-2 border-b border-gray-100">Списък с въведени артикули</h2>
-            <div id="admin-menu-list" class="divide-y divide-gray-100 overflow-y-auto max-h-[500px] pr-1"></div>
+            <div id="admin-menu-list" class="divide-y divide-gray-100 overflow-y-auto max-h-[550px] pr-1"></div>
         </div>
 
     </main>
 
-    <!-- СВЪРЗВАНЕ НА СКРИПТОВЕТЕ ДИРЕКТНО В ROOT ПАПКАТА -->
+    <!-- Скриптове -->
     <script src="admin.js"></script>
+    <script>
+        // Функция за запазване на темата
+        function setTheme(themeName) {
+            localStorage.setItem('menuTheme', themeName);
+            alert(`Темата е променена на "${themeName}". Отвори или презареди клиентското меню, за да я видиш!`);
+        }
 
+        // Функция за импорт на CSV/Excel структура
+        function importMenuFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            Papa.parse(file, {
+                header: true, // Приема, че първият ред съдържа заглавия (Име, Категория, Цена, Описание)
+                skipEmptyLines: true,
+                complete: function(results) {
+                    const importedData = results.data;
+                    let currentMenu = JSON.parse(localStorage.getItem('menuDishes')) || [];
+
+                    importedData.forEach(item => {
+                        // Почистване и валидация на данните от Excel файла
+                        const name = item['Име'] || item['name'] || item['Name'];
+                        const category = item['Категория'] || item['category'] || item['Category'] || 'Салати';
+                        const price = parseFloat(item['Цена'] || item['price'] || item['Price'] || 0);
+                        const desc = item['Описание'] || item['description'] || item['Description'] || '';
+
+                        if (name && price) {
+                            currentMenu.push({
+                                id: Date.now() + Math.random(),
+                                name: name.trim(),
+                                category: category.trim(),
+                                price: price,
+                                desc: desc.trim(),
+                                image: "https://via.placeholder.com/150"
+                            });
+                        }
+                    });
+
+                    localStorage.setItem('menuDishes', JSON.stringify(currentMenu));
+                    alert('Менюто беше импортирано успешно от документа!');
+                    if (typeof renderAdminMenu === 'function') {
+                        renderAdminMenu();
+                    } else {
+                        location.reload();
+                    }
+                }
+            });
+        }
+    </script>
 </body>
 </html>
