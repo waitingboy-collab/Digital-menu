@@ -1,37 +1,29 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Зареждане на името на ресторанта
     const savedName = localStorage.getItem("restaurantName") || "Моето заведение";
     const nameInput = document.getElementById("restaurant-name-input");
     if (nameInput) nameInput.value = savedName;
 
-    // 2. Зареждане на хартиеното меню, ако има такова
     const savedPaperMenu = localStorage.getItem("paperMenuImage");
     if (savedPaperMenu) {
         showImagePreview(savedPaperMenu);
     }
     
-    // 3. Първоначално изрисуване на текущото меню на екрана
     renderAdminMenu();
 
-    // 4. Закачане на събитието за добавяне на нов артикул
     const addDishForm = document.getElementById("add-dish-form");
     if (addDishForm) {
         addDishForm.addEventListener("submit", (e) => {
             e.preventDefault();
             
-            // Взимаме текущото състояние на менюто от базата
             const menu = getMenu();
-
-            // Взимаме елементите от формата
             const nameEl = document.getElementById("dish-name");
             const catEl = document.getElementById("dish-category");
             const priceEl = document.getElementById("dish-price");
             const imgEl = document.getElementById("dish-image");
             const descEl = document.getElementById("dish-desc");
 
-            // Създаваме новия обект
             const newItem = {
-                id: Date.now(), // Уникално ID базирано на времето
+                id: Date.now(),
                 name: nameEl ? nameEl.value : "",
                 category: catEl ? catEl.value : "Салати",
                 price: priceEl ? parseFloat(priceEl.value) : 0.00,
@@ -40,22 +32,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 available: true
             };
 
-            // Добавяме го в масива
             menu.push(newItem);
-            
-            // Записваме го (тази функция автоматично ще извика и renderAdminMenu())
             saveMenu(menu);
             
-            // Нулираме формата обратно до празни полета
             e.target.reset();
-            
-            // Връщаме дефолтния placeholder за снимка, тъй като reset() я изтрива
             if (imgEl) imgEl.value = "https://via.placeholder.com/150";
         });
     }
 });
-
-// --- Помощни функции за работа с менюто ---
 
 function getMenu() {
     const localData = localStorage.getItem("restaurantMenu");
@@ -82,22 +66,42 @@ function saveRestaurantName() {
     }
 }
 
-// --- Управление на хартиеното меню ---
-
 function previewAndProcessImage(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = function(e) {
-        const base64Image = e.target.result;
-        try {
-            localStorage.setItem("paperMenuImage", base64Image);
-            showImagePreview(base64Image);
-        } catch (error) {
-            alert("Снимката е твърде голяма! Моля, изберете по-малка снимка, тъй като паметта на браузъра се препълни.");
-            console.error(error);
-        }
+        const img = new Image();
+        img.onload = function() {
+            // Компресия на изображението чрез Canvas елемент
+            const canvas = document.createElement("canvas");
+            const MAX_WIDTH = 1024; // Оптимален размер за мобилен екран
+            let width = img.width;
+            let height = img.height;
+
+            if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Намаляване на качеството до 70% за драстично пестене на място
+            const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+
+            try {
+                localStorage.setItem("paperMenuImage", compressedBase64);
+                showImagePreview(compressedBase64);
+            } catch (error) {
+                alert("Паметта на браузъра е пълна. Моля, изтрийте други елементи.");
+                console.error(error);
+            }
+        };
+        img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
@@ -106,7 +110,6 @@ function showImagePreview(src) {
     const preview = document.getElementById("image-preview");
     const container = document.getElementById("image-preview-container");
     const manualSection = document.getElementById("manual-entry-section");
-
     if (preview) preview.src = src;
     if (container) container.classList.remove("hidden");
     if (manualSection) manualSection.classList.add("opacity-40");
@@ -119,12 +122,10 @@ function removePaperMenu() {
         const manualSection = document.getElementById("manual-entry-section");
         
         if (container) container.classList.add("hidden");
-        if (manualSection) manualSection.classList.remove("opacity-40");
-        document.getElementById('camera-input').value = ''; // Изчистваме инпута, за да може да се качи същата снимка пак при нужда
+        if (manualSection) manualSection.remove("opacity-40");
+        document.getElementById('camera-input').value = '';
     }
 }
-
-// --- Изрисуване (Рендериране) на администраторското меню ---
 
 function renderAdminMenu() {
     const menu = getMenu();
@@ -135,7 +136,6 @@ function renderAdminMenu() {
         container.innerHTML = `<p class="text-sm text-gray-400 py-4 text-center">Няма добавени артикули в менюто.</p>`;
         return;
     }
-
     container.innerHTML = menu.map(item => `
         <div class="py-4 flex justify-between items-center border-b border-gray-100 last:border-0 ${!item.available ? 'bg-gray-50 opacity-70' : ''}">
             <div>
