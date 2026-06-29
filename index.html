@@ -14,10 +14,9 @@
         .goog-text-highlight { background-color: transparent !important; border: none !important; box-shadow: none !important; }
     </style>
 </head>
-<!-- Класовете за фон ще се управляват динамично от JavaScript -->
 <body id="body-bg" class="bg-gray-50 min-h-screen pb-12 font-sans antialiased text-gray-900 transition-colors duration-500">
 
-    <!-- HEADER С ДИНАМИЧЕН ЦВЯТ -->
+    <!-- HEADER С ДИНАМИЧЕН ЦВЯТ И ИМЕ -->
     <header id="main-header" class="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 pt-6 pb-8 rounded-b-[2.5rem] shadow-md sticky top-0 z-40 transition-all duration-500">
         <div class="max-w-md mx-auto flex justify-between items-start">
             <div>
@@ -25,7 +24,7 @@
                 <p id="sub-title" class="text-xs font-medium text-amber-100 uppercase tracking-wider mt-0.5">Дигитално меню</p>
             </div>
             
-            <!-- Твоето оригинално меню -->
+            <!-- Твоето оригинално езиково меню -->
             <select id="language-select" onchange="triggerGoogleTranslate(this.value)" class="bg-black/20 text-white border border-white/30 rounded-xl px-2 py-1 text-xs font-bold focus:outline-none backdrop-blur-md cursor-pointer shadow-sm">
                 <option value="bg">BG 🇧🇬</option>
                 <option value="en">EN 🇬🇧</option>
@@ -46,50 +45,57 @@
         <section id="menu-container" class="mt-2"></section>
     </main>
 
-    <!-- СКРИТ КОНТЕЙНЕР ЗА GOOGLE TRANSLATE -->
+    <!-- НАПЪЛНО СКРИТ КОНТЕЙНЕР ЗА GOOGLE TRANSLATE -->
     <div id="google_translate_element" style="display:none;"></div>
 
-    <!-- Скриптове -->
+    <!-- СВЪРЗВАНЕ НА КЛИЕНТСКИЯ СКРИПТ -->
     <script src="app.js"></script>
 
+    <!-- ИНТЕЛИГЕНТНА СИНХРОНИЗАЦИЯ НА ТЕМА, ИМЕ И ПРЕВОД -->
     <script type="text/javascript">
-        // Логика за динамична смяна на фона/темата
         function applySavedTheme() {
+            // 1. Динамично обновяване на името на заведението
+            const savedName = localStorage.getItem('restaurantName');
+            const headerTitle = document.querySelector('#main-header h1');
+            if (savedName && headerTitle) {
+                headerTitle.textContent = savedName;
+            }
+
+            // 2. Динамично обновяване на дизайна/фона
             const theme = localStorage.getItem('menuTheme') || 'amber';
             const body = document.getElementById('body-bg');
             const header = document.getElementById('main-header');
             const subTitle = document.getElementById('sub-title');
 
-            // Изчистване на стари класове
             body.className = "min-h-screen pb-12 font-sans antialiased text-gray-900 transition-colors duration-500 ";
             header.className = "text-white px-4 pt-6 pb-8 rounded-b-[2.5rem] shadow-md sticky top-0 z-40 transition-all duration-500 ";
 
-            if (theme === 'sea') { // Морски бриз (За плажния бар в Гърция!)
+            if (theme === 'sea') {
                 body.classList.add('bg-cyan-50');
                 header.classList.add('from-cyan-500', 'to-blue-600');
                 subTitle.className = "text-xs font-medium text-cyan-100 uppercase tracking-wider mt-0.5";
-            } else if (theme === 'forest') { // Горско зелено (Уютно)
+            } else if (theme === 'forest') {
                 body.classList.add('bg-emerald-50');
                 header.classList.add('from-emerald-600', 'to-teal-700');
                 subTitle.className = "text-xs font-medium text-emerald-100 uppercase tracking-wider mt-0.5";
-            } else if (theme === 'dark') { // Модерна тъмна тема
+            } else if (theme === 'dark') {
                 body.classList.add('bg-gray-900', 'text-gray-100');
                 header.classList.add('from-gray-800', 'to-gray-950', 'border-b', 'border-gray-800');
                 subTitle.className = "text-xs font-medium text-amber-400 uppercase tracking-wider mt-0.5";
-            } else { // Класически кехлибар (По подразбиране)
+            } else {
                 body.classList.add('bg-gray-50');
                 header.classList.add('from-amber-500', 'to-amber-600');
                 subTitle.className = "text-xs font-medium text-amber-100 uppercase tracking-wider mt-0.5";
             }
         }
 
-        // Следене за промени в темата в реално време
+        // Следене за промени в реално време (ако админът и менюто са отворени едновременно)
         window.addEventListener('storage', (e) => {
-            if (e.key === 'menuTheme') applySavedTheme();
+            if (e.key === 'menuTheme' || e.key === 'restaurantName') applySavedTheme();
         });
         window.addEventListener('DOMContentLoaded', applySavedTheme);
 
-        // Google Translate
+        // Инициализация на Google Translate уиджета зад кулисите
         function googleTranslateElementInit() {
             new google.translate.TranslateElement({
                 pageLanguage: 'bg', 
