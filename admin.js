@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 3. Първоначално изрисуване на текущото меню на екрана
     renderAdminMenu();
 
-    // 4. Закачане на събитието за добавяне на нов артикул (Вече е на сигурно място тук)
+    // 4. Закачане на събитието за добавяне на нов артикул
     const addDishForm = document.getElementById("add-dish-form");
     if (addDishForm) {
         addDishForm.addEventListener("submit", (e) => {
@@ -95,7 +95,7 @@ function previewAndProcessImage(event) {
             localStorage.setItem("paperMenuImage", base64Image);
             showImagePreview(base64Image);
         } catch (error) {
-            alert("Снимката е твърде голяма за паметта на браузъра! Моля, прикачете по-малък файл или компресирана снимка.");
+            alert("Снимката е твърде голяма! Моля, изберете по-малка снимка, тъй като паметта на браузъра се препълни.");
             console.error(error);
         }
     };
@@ -120,6 +120,7 @@ function removePaperMenu() {
         
         if (container) container.classList.add("hidden");
         if (manualSection) manualSection.classList.remove("opacity-40");
+        document.getElementById('camera-input').value = ''; // Изчистваме инпута, за да може да се качи същата снимка пак при нужда
     }
 }
 
@@ -136,17 +137,17 @@ function renderAdminMenu() {
     }
 
     container.innerHTML = menu.map(item => `
-        <div class="py-4 flex justify-between items-center ${!item.available ? 'bg-gray-50 opacity-70' : ''}">
+        <div class="py-4 flex justify-between items-center border-b border-gray-100 last:border-0 ${!item.available ? 'bg-gray-50 opacity-70' : ''}">
             <div>
                 <h3 class="font-bold text-gray-800">${item.name} <span class="text-xs text-gray-400">(${item.category})</span></h3>
-                <p class="text-sm text-amber-600 font-semibold">${Number(item.price).toFixed(2)} лв.</p>
+                <p class="text-sm text-amber-600 font-semibold">&euro; ${Number(item.price).toFixed(2)}</p>
             </div>
             <div class="flex items-center gap-3">
                 <button onclick="toggleAvailability(${item.id})" class="px-3 py-1 rounded text-xs font-semibold transition 
                     ${item.available ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}">
                     ${item.available ? 'Налично' : 'Изчерпано'}
                 </button>
-                <button onclick="deleteItem(${item.id})" class="bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-600 p-2 rounded transition">Изтрий</button>
+                <button onclick="deleteItem(${item.id})" class="bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-600 p-2 rounded transition text-xs font-medium">Изтрий</button>
             </div>
         </div>
     `).join("");
