@@ -7,35 +7,26 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Скриване на излишните елементи и ленти на Google Translate */
-        .goog-te-banner-frame.skiptranslate, .goog-te-gadget-icon {
-            display: none !important;
-        }
-        body {
-            top: 0px !important;
-        }
-        .skiptranslate iframe {
-            display: none !important;
-        }
-        .goog-text-highlight {
-            background-color: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
+        /* Скриване на излишните елементи на Google Translate */
+        .goog-te-banner-frame.skiptranslate, .goog-te-gadget-icon { display: none !important; }
+        body { top: 0px !important; }
+        .skiptranslate iframe { display: none !important; }
+        .goog-text-highlight { background-color: transparent !important; border: none !important; box-shadow: none !important; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen pb-12 font-sans antialiased text-gray-900">
+<!-- Класовете за фон ще се управляват динамично от JavaScript -->
+<body id="body-bg" class="bg-gray-50 min-h-screen pb-12 font-sans antialiased text-gray-900 transition-colors duration-500">
 
-    <!-- HEADER С КРАСИВОТО ПАДАЩО МЕНЮ -->
-    <header class="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 pt-6 pb-8 rounded-b-[2.5rem] shadow-md sticky top-0 z-40">
+    <!-- HEADER С ДИНАМИЧЕН ЦВЯТ -->
+    <header id="main-header" class="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 pt-6 pb-8 rounded-b-[2.5rem] shadow-md sticky top-0 z-40 transition-all duration-500">
         <div class="max-w-md mx-auto flex justify-between items-start">
             <div>
                 <h1 class="text-2xl font-black tracking-tight drop-shadow-sm">Моето заведение</h1>
                 <p id="sub-title" class="text-xs font-medium text-amber-100 uppercase tracking-wider mt-0.5">Дигитално меню</p>
             </div>
             
-            <!-- Твоето оригинално селектор меню, управляващо Google зад кулисите -->
-            <select id="language-select" onchange="triggerGoogleTranslate(this.value)" class="bg-amber-700 text-white border border-white/30 rounded-xl px-2 py-1 text-xs font-bold focus:outline-none backdrop-blur-md cursor-pointer shadow-sm">
+            <!-- Твоето оригинално меню -->
+            <select id="language-select" onchange="triggerGoogleTranslate(this.value)" class="bg-black/20 text-white border border-white/30 rounded-xl px-2 py-1 text-xs font-bold focus:outline-none backdrop-blur-md cursor-pointer shadow-sm">
                 <option value="bg">BG 🇧🇬</option>
                 <option value="en">EN 🇬🇧</option>
                 <option value="el">EL 🇬🇷</option>
@@ -55,14 +46,50 @@
         <section id="menu-container" class="mt-2"></section>
     </main>
 
-    <!-- НАПЪЛНО СКРИТ КОНТЕЙНЕР ЗА GOOGLE TRANSLATE -->
+    <!-- СКРИТ КОНТЕЙНЕР ЗА GOOGLE TRANSLATE -->
     <div id="google_translate_element" style="display:none;"></div>
 
-    <!-- СВЪРЗВАНЕ НА СКРИПТОВЕТЕ ДИРЕКТНО В ROOT ПАПКАТА -->
+    <!-- Скриптове -->
     <script src="app.js"></script>
 
-    <!-- Инициализация на Google Translate уиджета -->
     <script type="text/javascript">
+        // Логика за динамична смяна на фона/темата
+        function applySavedTheme() {
+            const theme = localStorage.getItem('menuTheme') || 'amber';
+            const body = document.getElementById('body-bg');
+            const header = document.getElementById('main-header');
+            const subTitle = document.getElementById('sub-title');
+
+            // Изчистване на стари класове
+            body.className = "min-h-screen pb-12 font-sans antialiased text-gray-900 transition-colors duration-500 ";
+            header.className = "text-white px-4 pt-6 pb-8 rounded-b-[2.5rem] shadow-md sticky top-0 z-40 transition-all duration-500 ";
+
+            if (theme === 'sea') { // Морски бриз (За плажния бар в Гърция!)
+                body.classList.add('bg-cyan-50');
+                header.classList.add('from-cyan-500', 'to-blue-600');
+                subTitle.className = "text-xs font-medium text-cyan-100 uppercase tracking-wider mt-0.5";
+            } else if (theme === 'forest') { // Горско зелено (Уютно)
+                body.classList.add('bg-emerald-50');
+                header.classList.add('from-emerald-600', 'to-teal-700');
+                subTitle.className = "text-xs font-medium text-emerald-100 uppercase tracking-wider mt-0.5";
+            } else if (theme === 'dark') { // Модерна тъмна тема
+                body.classList.add('bg-gray-900', 'text-gray-100');
+                header.classList.add('from-gray-800', 'to-gray-950', 'border-b', 'border-gray-800');
+                subTitle.className = "text-xs font-medium text-amber-400 uppercase tracking-wider mt-0.5";
+            } else { // Класически кехлибар (По подразбиране)
+                body.classList.add('bg-gray-50');
+                header.classList.add('from-amber-500', 'to-amber-600');
+                subTitle.className = "text-xs font-medium text-amber-100 uppercase tracking-wider mt-0.5";
+            }
+        }
+
+        // Следене за промени в темата в реално време
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'menuTheme') applySavedTheme();
+        });
+        window.addEventListener('DOMContentLoaded', applySavedTheme);
+
+        // Google Translate
         function googleTranslateElementInit() {
             new google.translate.TranslateElement({
                 pageLanguage: 'bg', 
@@ -80,6 +107,5 @@
         }
     </script>
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
 </body>
 </html>
