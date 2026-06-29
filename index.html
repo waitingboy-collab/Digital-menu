@@ -4,19 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Дигитално Меню</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Скриване на излишните елементи на Google Translate */
         .goog-te-banner-frame.skiptranslate, .goog-te-gadget-icon { display: none !important; }
         body { top: 0px !important; }
         .skiptranslate iframe { display: none !important; }
-        .goog-text-highlight { background-color: transparent !important; border: none !important; box-shadow: none !important; }
+        
+        /* Премахване на грозния син/жълт фон при превод от Google */
+        .goog-text-highlight { 
+            background-color: transparent !important; 
+            box-shadow: none !important; 
+            box-sizing: border-box !important;
+        }
     </style>
 </head>
 <body id="body-bg" class="bg-gray-50 min-h-screen pb-12 font-sans antialiased text-gray-900 transition-colors duration-500">
 
-    <!-- HEADER С ДИНАМИЧЕН ЦВЯТ И ИМЕ -->
     <header id="main-header" class="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 pt-6 pb-8 rounded-b-[2.5rem] shadow-md sticky top-0 z-40 transition-all duration-500">
         <div class="max-w-md mx-auto flex justify-between items-start">
             <div>
@@ -24,34 +28,30 @@
                 <p id="sub-title" class="text-xs font-medium text-amber-100 uppercase tracking-wider mt-0.5">Дигитално меню</p>
             </div>
             
-            <!-- Твоето оригинално езиково меню -->
-            <select id="language-select" onchange="triggerGoogleTranslate(this.value)" class="bg-black/20 text-white border border-white/30 rounded-xl px-2 py-1 text-xs font-bold focus:outline-none backdrop-blur-md cursor-pointer shadow-sm">
-                <option value="bg">BG 🇧🇬</option>
-                <option value="en">EN 🇬🇧</option>
-                <option value="el">EL 🇬🇷</option>
-                <option value="ru">RU 🇷🇺</option>
-                <option value="pl">PL 🇵🇱</option>
-                <option value="tr">TR 🇹🇷</option>
-            </select>
+            <div class="flex flex-col">
+                <label for="language-select" class="sr-only">Изберете език / Choose Language</label>
+                <select id="language-select" title="Language Selector" onchange="triggerGoogleTranslate(this.value)" class="bg-black/20 text-white border border-white/30 rounded-xl px-2 py-1 text-xs font-bold focus:outline-none backdrop-blur-md cursor-pointer shadow-sm">
+                    <option value="bg">BG 🇧🇬</option>
+                    <option value="en">EN 🇬🇧</option>
+                    <option value="el">EL 🇬🇷</option>
+                    <option value="ru">RU 🇷🇺</option>
+                    <option value="pl">PL 🇵🇱</option>
+                    <option value="tr">TR 🇹🇷</option>
+                </select>
+            </div>
         </div>
     </header>
 
-    <!-- ОСНОВНО СЪДЪРЖАНИЕ -->
     <main class="max-w-md mx-auto px-4 -mt-4">
-        <!-- Навигация за категориите -->
         <nav id="categories-nav" class="flex gap-2 overflow-x-auto pb-3 pt-1 scrollbar-none"></nav>
 
-        <!-- Контейнер за ястията -->
         <section id="menu-container" class="mt-2"></section>
     </main>
 
-    <!-- НАПЪЛНО СКРИТ КОНТЕЙНЕР ЗА GOOGLE TRANSLATE -->
-    <div id="google_translate_element" style="display:none;"></div>
+    <div id="google_translate_element" style="display:none;"><select title="Google Translate Hidden Selector"><option value="">Translate</option></select></div>
 
-    <!-- СВЪРЗВАНЕ НА КЛИЕНТСКИЯ СКРИПТ -->
     <script src="app.js"></script>
 
-    <!-- ИНТЕЛИГЕНТНА СИНХРОНИЗАЦИЯ НА ТЕМА, ИМЕ И ПРЕВОД -->
     <script type="text/javascript">
         function applySavedTheme() {
             // 1. Динамично обновяване на името на заведението
@@ -61,14 +61,14 @@
                 headerTitle.textContent = savedName;
             }
 
-            // 2. Динамично обновяване на дизайна/фона
+            // 2. Динамично обновяване на дизайна/фона с bg-gradient-to-r!
             const theme = localStorage.getItem('menuTheme') || 'amber';
             const body = document.getElementById('body-bg');
             const header = document.getElementById('main-header');
             const subTitle = document.getElementById('sub-title');
 
             body.className = "min-h-screen pb-12 font-sans antialiased text-gray-900 transition-colors duration-500 ";
-            header.className = "text-white px-4 pt-6 pb-8 rounded-b-[2.5rem] shadow-md sticky top-0 z-40 transition-all duration-500 ";
+            header.className = "bg-gradient-to-r text-white px-4 pt-6 pb-8 rounded-b-[2.5rem] shadow-md sticky top-0 z-40 transition-all duration-500 ";
 
             if (theme === 'sea') {
                 body.classList.add('bg-cyan-50');
@@ -80,7 +80,7 @@
                 subTitle.className = "text-xs font-medium text-emerald-100 uppercase tracking-wider mt-0.5";
             } else if (theme === 'dark') {
                 body.classList.add('bg-gray-900', 'text-gray-100');
-                header.classList.add('from-gray-800', 'to-gray-950', 'border-b', 'border-gray-800');
+                header.className = "bg-gradient-to-r text-white px-4 pt-6 pb-8 rounded-b-[2.5rem] shadow-md sticky top-0 z-40 transition-all duration-500 from-gray-800 to-gray-950 border-b border-gray-800";
                 subTitle.className = "text-xs font-medium text-amber-400 uppercase tracking-wider mt-0.5";
             } else {
                 body.classList.add('bg-gray-50');
@@ -89,13 +89,12 @@
             }
         }
 
-        // Следене за промени в реално време (ако админът и менюто са отворени едновременно)
         window.addEventListener('storage', (e) => {
             if (e.key === 'menuTheme' || e.key === 'restaurantName') applySavedTheme();
         });
         window.addEventListener('DOMContentLoaded', applySavedTheme);
 
-        // Инициализация на Google Translate уиджета зад кулисите
+        // Инициализация на Google Translate уиджета
         function googleTranslateElementInit() {
             new google.translate.TranslateElement({
                 pageLanguage: 'bg', 
