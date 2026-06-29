@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Контролен Панел - Меню</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Парсер за импорт от Excel/CSV документи -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans text-gray-800 antialiased">
@@ -20,19 +18,19 @@
 
     <main class="max-w-4xl mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        <!-- ЛЯВА КОЛОНА: НАСТРОЙКИ, ИМЕ, ТЕМИ И ИМПОРТ -->
         <div class="space-y-6">
             
-            <!-- ИМЕ НА ЗАВЕДЕНИЕТО -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                 <h2 class="text-base font-bold text-gray-700 mb-3">🏨 Име на заведението</h2>
-                <div class="flex gap-2">
-                    <input type="text" id="restaurant-name-input" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-amber-500" placeholder="Въведете име">
-                    <button onclick="saveRestaurantName()" class="bg-slate-700 hover:bg-slate-800 text-white px-4 rounded-xl text-sm font-semibold transition">Запази</button>
+                <div class="flex flex-col gap-2">
+                    <label for="restaurant-name-input" class="sr-only">Име на ресторанта</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="restaurant-name-input" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-amber-500" placeholder="Въведете име на заведението">
+                        <button onclick="saveRestaurantName()" class="bg-slate-700 hover:bg-slate-800 text-white px-4 rounded-xl text-sm font-semibold transition">Запази</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- ИЗБОР НА ФОН / ТЕМА -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                 <h2 class="text-base font-bold text-gray-700 mb-3">🎨 Дизайн на клиентското меню</h2>
                 <div class="grid grid-cols-2 gap-2">
@@ -43,25 +41,24 @@
                 </div>
             </div>
 
-            <!-- ИМПОРТ ОТ EXCEL / CSV ДОКУМЕНТ -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                 <h2 class="text-base font-bold text-gray-700 mb-2">📊 Професионален импорт от файл</h2>
                 <p class="text-xs text-gray-400 mb-3">Качете `.csv` файл с колони: Име, Категория, Цена, Описание.</p>
+                <label for="csv-file-input" class="sr-only">Изберете CSV файл</label>
                 <input type="file" id="csv-file-input" accept=".csv,.txt" onchange="importMenuFromFile(event)" class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
             </div>
 
-            <!-- ФОРМА ЗА ЕДИНИЧЕН АРТИКУЛ -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                 <h2 class="text-base font-bold text-gray-700 mb-4">Добавяне на нов артикул</h2>
                 <form id="add-dish-form" class="space-y-3">
                     <div>
-                        <label class="block text-xs font-medium text-gray-500 mb-1">Име на ястието</label>
-                        <input type="text" id="dish-name" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-amber-500">
+                        <label for="dish-name" class="block text-xs font-medium text-gray-500 mb-1">Име на ястието</label>
+                        <input type="text" id="dish-name" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-amber-500" placeholder="Въведете име на ястието">
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Категория</label>
-                            <select id="dish-category" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-amber-500">
+                            <label for="dish-category" class="block text-xs font-medium text-gray-500 mb-1">Категория</label>
+                            <select id="dish-category" title="Изберете категория" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-amber-500">
                                 <option value="Салати">Салати 🥗</option>
                                 <option value="Основни">Основни 🍖</option>
                                 <option value="Супи">Супи 🥣</option>
@@ -70,20 +67,19 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Цена (€)</label>
+                            <label for="dish-price" class="block text-xs font-medium text-gray-500 mb-1">Цена (€)</label>
                             <input type="number" id="dish-price" step="0.01" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-amber-500" placeholder="0.00">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-500 mb-1">Описание / Алергени</label>
-                        <textarea id="dish-desc" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-amber-500"></textarea>
+                        <label for="dish-desc" class="block text-xs font-medium text-gray-500 mb-1">Описание / Алергени</label>
+                        <textarea id="dish-desc" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-amber-500" placeholder="Въведете описание на български език"></textarea>
                     </div>
                     <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-sm mt-2">Добави в менюто</button>
                 </form>
             </div>
         </div>
 
-        <!-- ДЯСНА КОЛОНА: СПИСЪК С АРТИКУЛИ -->
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full">
             <h2 class="text-base font-bold text-gray-700 mb-3 pb-2 border-b border-gray-100">Списък с въведени артикули</h2>
             <div id="admin-menu-list" class="divide-y divide-gray-100 overflow-y-auto max-h-[650px] pr-1"></div>
@@ -91,12 +87,9 @@
 
     </main>
 
-    <!-- СВЪРЗВАНЕ НА АДМИН СКИПТА -->
     <script src="admin.js"></script>
     
-    <!-- ЛОГИКА НА ПАНЕЛА -->
     <script>
-        // Функция за запазване на името на ресторанта
         function saveRestaurantName() {
             const nameInput = document.getElementById('restaurant-name-input').value;
             if (nameInput.trim() !== '') {
@@ -105,7 +98,6 @@
             }
         }
 
-        // Зареждане на текущите данни при отваряне
         window.addEventListener('DOMContentLoaded', () => {
             const savedName = localStorage.getItem('restaurantName');
             if (savedName) {
@@ -113,13 +105,11 @@
             }
         });
 
-        // Функция за запазване на темата
         function setTheme(themeName) {
             localStorage.setItem('menuTheme', themeName);
-            alert(`Темата е променена на "${themeName}". Отвори или презареди клиентското меню, за да я видиш!`);
+            alert(`Темата е променена на "${themeName}". Презаредете клиентското меню, за да я видите!`);
         }
 
-        // Функция за автоматичен импорт от CSV
         function importMenuFromFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -144,7 +134,7 @@
                                 category: category.trim(),
                                 price: price,
                                 desc: desc.trim(),
-                                image: "https://via.placeholder.com/150"
+                                image: "" // Без счупени placeholder линкове, app.js ще се погрижи
                             });
                         }
                     });
