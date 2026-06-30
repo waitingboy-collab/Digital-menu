@@ -4,114 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Дигитално Меню</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        /* Скриване на излишните елементи на Google Translate */
-        .goog-te-banner-frame.skiptranslate, .goog-te-gadget-icon { display: none !important; }
-        body { top: 0px !important; }
-        .skiptranslate iframe { display: none !important; }
-        
-        /* Премахване на грозния син/жълт фон при превод от Google */
-        .goog-text-highlight { 
-            background-color: transparent !important; 
-            box-shadow: none !important; 
-            box-sizing: border-box !important;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body id="body-bg" class="bg-gray-50 min-h-screen pb-12 font-sans antialiased text-gray-900 transition-colors duration-500">
+<body class="bg-gray-50 text-gray-900 font-sans antialiased min-h-screen">
 
-    <header id="main-header" class="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 pt-6 pb-8 rounded-b-[2.5rem] shadow-md sticky top-0 z-40 transition-all duration-500">
-        <div class="max-w-md mx-auto flex justify-between items-start">
-            <div>
-                <h1 class="text-2xl font-black tracking-tight drop-shadow-sm">Моето заведение</h1>
-                <p id="sub-title" class="text-xs font-medium text-amber-100 uppercase tracking-wider mt-0.5">Дигитално меню</p>
+    <div class="max-w-md mx-auto bg-white min-h-screen shadow-lg flex flex-col">
+        
+        <!-- Фиксиран хедър блок: Няма опасност нищо да закрие категориите, тъй като те следват нормалния поток под него -->
+        <header class="bg-amber-600 text-white text-center py-6 px-4 shadow-sm rounded-b-3xl">
+            <h1 class="text-2xl font-black tracking-wide truncate">Зареждане...</h1>
+            <p class="text-xs opacity-80 mt-1 uppercase tracking-wider font-semibold">Дигитално меню</p>
+        </header>
+
+        <!-- Навигация по категории с лепкаво позициониране, независима от долен футър -->
+        <nav class="sticky top-0 bg-white/95 backdrop-blur-md shadow-xs py-3.5 px-4 flex gap-2.5 overflow-x-auto no-scrollbar z-10 border-b border-gray-100" id="categories-nav">
+            <!-- Категориите ще излязат тук -->
+        </nav>
+
+        <!-- Основен контейнер за артикули -->
+        <main class="px-4 pt-2 pb-16 flex-1" id="menu-container">
+            <div class="flex justify-center items-center py-20">
+                <p class="text-gray-400 text-sm">Зареждане на менюто...</p>
             </div>
-            
-            <div class="flex flex-col">
-                <label for="language-select" class="sr-only">Изберете език / Choose Language</label>
-                <select id=language-select title="Language Selector" onchange=triggerGoogleTranslate(this.value) class="bg-black/20 text-white border border-white/30 rounded-xl px-2 py-1 text-xs font-bold focus:outline-none backdrop-blur-md cursor-pointer shadow-sm">
-                    <option value="bg">BG 🇧🇬</option>
-                    <option value="en">EN 🇬🇧</option>
-                    <option value="el">EL 🇬🇷</option>
-                    <option value="ru">RU 🇷🇺</option>
-                    <option value="pl">PL 🇵🇱</option>
-                    <option value="tr">TR 🇹🇷</option>
-                </select>
-            </div>
-        </div>
-    </header>
+        </main>
+        
+    </div>
 
-    <main class="max-w-md mx-auto px-4 -mt-4">
-        <nav id="categories-nav" class="flex gap-2 overflow-x-auto pb-3 pt-1 scrollbar-none"></nav>
-
-        <section id="menu-container" class="mt-2"></section>
-    </main>
-
-    <!-- НАПЪЛНО СКРИТ КОНТЕЙНЕР ЗА GOOGLE TRANSLATE -->
-<div id=google_translate_element style="display:none;"></div>
-
-    <script src="app.js"></script>
-
-    <script type="text/javascript">
-        function applySavedTheme() {
-            // 1. Динамично обновяване на името на заведението
-            const savedName = localStorage.getItem('restaurantName');
-            const headerTitle = document.querySelector('#main-header h1');
-            if (savedName && headerTitle) {
-                headerTitle.textContent = savedName;
-            }
-
-            // 2. Динамично обновяване на дизайна/фона с bg-gradient-to-r!
-            const theme = localStorage.getItem('menuTheme') || 'amber';
-            const body = document.getElementById('body-bg');
-            const header = document.getElementById('main-header');
-            const subTitle = document.getElementById('sub-title');
-
-            body.className = "min-h-screen pb-12 font-sans antialiased text-gray-900 transition-colors duration-500 ";
-            header.className = "bg-gradient-to-r text-white px-4 pt-6 pb-8 rounded-b-[2.5rem] shadow-md sticky top-0 z-40 transition-all duration-500 ";
-
-            if (theme === 'sea') {
-                body.classList.add('bg-cyan-50');
-                header.classList.add('from-cyan-500', 'to-blue-600');
-                subTitle.className = "text-xs font-medium text-cyan-100 uppercase tracking-wider mt-0.5";
-            } else if (theme === 'forest') {
-                body.classList.add('bg-emerald-50');
-                header.classList.add('from-emerald-600', 'to-teal-700');
-                subTitle.className = "text-xs font-medium text-emerald-100 uppercase tracking-wider mt-0.5";
-            } else if (theme === 'dark') {
-                body.classList.add('bg-gray-900', 'text-gray-100');
-                header.className = "bg-gradient-to-r text-white px-4 pt-6 pb-8 rounded-b-[2.5rem] shadow-md sticky top-0 z-40 transition-all duration-500 from-gray-800 to-gray-950 border-b border-gray-800";
-                subTitle.className = "text-xs font-medium text-amber-400 uppercase tracking-wider mt-0.5";
-            } else {
-                body.classList.add('bg-gray-50');
-                header.classList.add('from-amber-500', 'to-amber-600');
-                subTitle.className = "text-xs font-medium text-amber-100 uppercase tracking-wider mt-0.5";
-            }
-        }
-
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'menuTheme' || e.key === 'restaurantName') applySavedTheme();
-        });
-        window.addEventListener('DOMContentLoaded', applySavedTheme);
-
-        // Инициализация на Google Translate уиджета
-        function googleTranslateElementInit() {
-            new google.translate.TranslateElement({
-                pageLanguage: 'bg', 
-                includedLanguages: 'en,el,de,ru,pl,tr', 
-                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-            }, 'google_translate_element');
-        }
-
-        function triggerGoogleTranslate(langCode) {
-            const googleSelect = document.querySelector('#google_translate_element select');
-            if (googleSelect) {
-                googleSelect.value = langCode;
-                googleSelect.dispatchEvent(new Event('change'));
-            }
-        }
-    </script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
