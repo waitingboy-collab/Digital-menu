@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const savedName = localStorage.getItem("restaurantName") || "Моето заведение";
     document.getElementById("restaurant-name-input").value = savedName;
+    
     renderAdminMenu();
 });
 
@@ -19,7 +20,7 @@ function saveRestaurantName() {
     alert("Името е запазено!");
 }
 
-// Модернизирана и сигурна функция за импорт на Excel / CSV
+// Първоначален импорт от Excel / CSV
 function importFile() {
     const fileInput = document.getElementById("file-import");
     const file = fileInput.files[0];
@@ -33,18 +34,15 @@ function importFile() {
     const fileType = file.name.split('.').pop().toLowerCase();
 
     reader.onload = function(e) {
-        try {
-            const data = new Uint8Array(e.target.result);
-            let importedData = [];
+        const data = e.target.result;
+        let importedData = [];
 
+        try {
             if (fileType === 'csv') {
-                // Декодираме CSV текста на български (UTF-8)
-                const decoder = new TextDecoder("utf-8");
-                const text = decoder.decode(data);
+                const text = new TextDecoder("utf-8").decode(data);
                 importedData = parseCSV(text);
             } else {
-                // Четем Excel (.xlsx / .xls) от масива с байтове
-                const workbook = XLSX.read(data, { type: 'array' });
+                const workbook = XLSX.read(data, { type: 'binary' });
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
                 importedData = XLSX.utils.sheet_to_json(worksheet);
@@ -52,86 +50,66 @@ function importFile() {
 
             processAndSaveImportedMenu(importedData);
         } catch (error) {
-            console.error("Грешка при обработка на файла:", error);
-            alert("Възникна грешка при четенето на файла. Уверете се, че не е повреден.");
+            console.error(error);
+            alert("Грешка при четене на файла! Проверете дали структурата му е правилна.");
         }
     };
 
-    // Четем файла като ArrayBuffer - работи безотказно за всички формати
-    reader.readAsArrayBuffer(file);
+    if (fileType === 'csv') {
+        reader.readAsArrayBuffer(file);
+    } else {
+        reader.readAsBinaryString(file);
+    }
 }
 
-// Защитен парсер за CSV формати
 function parseCSV(text) {
-    const lines = text.split(/\r?\n/);
-    if (lines.length === 0 || !lines[0].trim()) return [];
-
-    const headers = lines[0].split(",").map(h => h.trim().replace(/^"|"$/g, ''));
+    const lines = text.split("\n");
+    const headers = lines[0].split(",").map(h => h.trim());
     const result = [];
 
     for (let i = 1; i < lines.length; i++) {
         if (!lines[i].trim()) continue;
-        
-        // Разделяне по запетая, като изчистваме кавичките, ако има такива
-        const currentLine = lines[i].split(",").map(v => v.trim().replace(/^"|"$/g, ''));
+        const currentLine = lines[i].split(",");
         const obj = {};
-        
         headers.forEach((header, index) => {
-            obj[header] = currentLine[index] !== undefined ? currentLine[index] : "";
+            obj[header] = currentLine[index] ? currentLine[index].trim() : "";
         });
         result.push(obj);
     }
     return result;
 }
 
-// Интелигентна обработка на колоните от Excel/CSV таблицата
 function processAndSaveImportedMenu(data) {
-    if (!data || data.length === 0) {
-        alert("Файлът е празен или няма разпознаваеми редове!");
+    if (data.length === 0) {
+        alert("Файлът е празен!");
         return;
     }
 
     const currentMenu = getMenu();
-    let addedCount = 0;
 
     data.forEach((row, index) => {
-        // Проверка за заглавието на колоната "Име"
-        const name = row["Име"] || row["name"] || row["Name"] || row["Наименование"] || row["Продукт"];
-        
-        // Категория по подразбиране, ако липсва
-        const category = row["Категория"] || row["category"] || row["Category"] || "Топли напитки";
-        
-        // Форматиране и изчистване на цената
-        let rawPrice = row["Цена"] || row["price"] || row["Price"] || "0";
-        if (typeof rawPrice === "string") {
-            rawPrice = rawPrice.replace(",", ".").replace(/[^0-9.]/g, "");
-        }
-        const price = parseFloat(rawPrice) || 0;
-        
+        const name = row["Име"] || row["name"] || row["Name"];
+        const category = row["Категория"] || row["category"] || row["Category"] || "Други";
+        const price = parseFloat(row["Цена"] || row["price"] || row["Price"] || 0);
         const description = row["Описание"] || row["description"] || row["Description"] || "";
         const image = row["Снимка"] || row["image"] || row["Image"] || "https://via.placeholder.com/150";
 
-        if (name && name.toString().trim() !== "") {
+        if (name) {
             currentMenu.push({
-                id: Date.now() + index + Math.floor(Math.random() * 1000),
-                name: name.toString().trim(),
-                category: category.toString().trim(),
+                id: Date.now() + index,
+                name: name,
+                category: category,
                 price: price,
-                description: description.toString().trim(),
-                image: image.toString().trim(),
+                description: description,
+                image: image,
                 available: true
             });
-            addedCount++;
         }
     });
 
-    if (addedCount > 0) {
-        saveMenu(currentMenu);
-        alert(`Успешно добавихте ${addedCount} артикула в менюто!`);
-        document.getElementById("file-import").value = ""; // Изчистване на бутона
-    } else {
-        alert("Не бяха намерени съвпадащи данни. Проверете дали първият ред (заглавният) съдържа: Име, Категория, Цена");
-    }
+    saveMenu(currentMenu);
+    alert(`Успешно импортирахте нови артикули във вашето меню!`);
+    document.getElementById("file-import").value = ""; 
 }
 
 function downloadTemplate() {
