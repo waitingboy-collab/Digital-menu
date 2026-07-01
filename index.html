@@ -6,44 +6,54 @@
     <title>Дигитално QR Меню</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        /* Плавна анимация при скролване до категориите */
-        html {
-            scroll-behavior: smooth;
-        }
-        /* Скриване на скролбара за бутоните с категории (за по-изчистен дизайн) */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        html { scroll-behavior: smooth; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* СКРИВА ГРОЗНАТА ЛЕНТА НА GOOGLE TRANSLATE НАД ХЕДЪРА */
+        .skiptranslate, .goog-te-banner-frame { display: none !important; }
+        body { top: 0px !important; }
+        .goog-te-gadget { display: none !important; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 font-sans pb-12">
 
+    <!-- ХЕДЪР -->
     <header class="bg-amber-600 text-white text-center py-7 px-4 shadow-sm rounded-b-3xl relative">
+        <!-- БУТОН ЗА ПРЕВОД -->
         <div class="absolute top-4 right-4 z-20">
-            <button onclick="toggleLanguage()" id="lang-btn" class="bg-white/20 hover:bg-white/30 backdrop-blur-md text-xs font-black px-3 py-1.5 rounded-full border border-white/30 transition flex items-center gap-1 cursor-pointer tracking-wider">
+            <button onclick="toggleGoogleLanguage()" id="lang-btn" class="bg-white/20 hover:bg-white/30 backdrop-blur-md text-xs font-black px-3 py-1.5 rounded-full border border-white/30 transition flex items-center gap-1 cursor-pointer tracking-wider">
                 🌐 <span id="lang-text">EN</span>
             </button>
         </div>
 
         <h1 class="text-2xl font-black tracking-wide truncate mt-2 pr-12" id="restaurant-title">Зареждане...</h1>
-        <p class="text-[11px] opacity-90 mt-1 uppercase tracking-widest font-bold" id="menu-subtitle">Дигитално меню</p>
+        <p class="text-[11px] opacity-90 mt-1 uppercase tracking-widest font-bold">Дигитално меню</p>
     </header>
 
+    <!-- НАВИГАЦИЯ С КАТЕГОРИИ -->
     <div class="sticky top-0 bg-white/80 backdrop-blur-md shadow-sm z-10 py-3 mt-2">
-        <div id="categories-nav" class="flex gap-2 overflow-x-auto px-4 no-scrollbar">
-            </div>
+        <div id="categories-nav" class="flex gap-2 overflow-x-auto px-4 no-scrollbar"></div>
     </div>
 
-    <main class="max-w-md mx-auto px-4 mt-4 space-y-8" id="menu-container">
-        </main>
+    <!-- СЪДЪРЖАНИЕ -->
+    <main class="max-w-md mx-auto px-4 mt-4 space-y-8" id="menu-container"></main>
 
-    <footer class="text-center text-gray-400 text-[10px] mt-12 pb-6">
-        <p>© 2026 Всички права запазени.</p>
-    </footer>
+    <!-- Скрит оригинален елемент на Google Translate, който е нужен, за да работи двигателят -->
+    <div id="google_translate_element" class="hidden"></div>
+
+    <!-- Зареждане на ядрото на Google Translate -->
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'bg',
+                includedLanguages: 'en,bg',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
     <script src="app.js"></script>
 </body>
