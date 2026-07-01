@@ -1,8 +1,17 @@
-// ВАШЕ ТУК: Настройте желаната парола за достъп
-const ADMIN_PASSWORD = "admin1234";
+// Функция за извличане на потребителите от базата данни
+function getUsers() {
+    const localUsers = localStorage.getItem("systemUsers");
+    if (!localUsers) {
+        // Ако няма нито един потребител, създаваме главния администратор по подразбиране
+        const defaultUsers = [{ username: "admin", password: "admin1234", isRoot: true }];
+        localStorage.setItem("systemUsers", JSON.stringify(defaultUsers));
+        return defaultUsers;
+    }
+    return JSON.parse(localUsers);
+}
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Проверяваме дали потребителят вече е влизал успешно в тази сесия
+    // Проверяваме за активна сесия
     if (sessionStorage.getItem("adminLoggedIn") === "true") {
         showAdminPanel();
     } else {
@@ -14,11 +23,17 @@ document.addEventListener("DOMContentLoaded", () => {
 function initLoginScreen() {
     document.getElementById("login-form").addEventListener("submit", (e) => {
         e.preventDefault();
+        const inputUser = document.getElementById("admin-username").value.trim().toLowerCase();
         const inputPass = document.getElementById("admin-password").value;
         const errorMsg = document.getElementById("login-error");
 
-        if (inputPass === ADMIN_PASSWORD) {
+        const users = getUsers();
+        // Търсим дали съвпада комбинацията от потребител и парола
+        const foundUser = users.find(u => u.username === inputUser && u.password === inputPass);
+
+        if (foundUser) {
             sessionStorage.setItem("adminLoggedIn", "true");
+            sessionStorage.setItem("currentAdminUser", foundUser.username);
             errorMsg.classList.add("hidden");
             showAdminPanel();
         } else {
@@ -30,24 +45,79 @@ function initLoginScreen() {
 
 // Превключване на изгледа и зареждане на данните
 function showAdminPanel() {
-    // Променяме стиловете на бодито, за да пасне на голямата таблица
     document.body.className = "bg-gray-100 text-gray-900 font-sans p-4";
-    
     document.getElementById("login-screen").classList.add("hidden");
     document.getElementById("admin-content").classList.remove("hidden");
     
-    // Зареждаме и рендерираме оригиналните данни
+    // Изписваме името на текущия влязъл потребител
+    const currentUser = sessionStorage.getItem("currentAdminUser") || "персонал";
+    document.getElementById("current-user-display").innerText = currentUser;
+    
     const savedName = localStorage.getItem("restaurantName") || "Моето заведение";
     document.getElementById("restaurant-name-input").value = savedName;
+    
     renderAdminMenu();
+    renderUsersList();
 }
 
 // Изход от системата
 function logoutAdmin() {
     sessionStorage.removeItem("adminLoggedIn");
-    window.location.reload(); // Презареждаме, за да заключим страницата обратно
+    sessionStorage.removeItem("currentAdminUser");
+    window.location.reload();
 }
 
+// НОВА ФУНКЦИЯ: Добавяне на нов потребител в списъка
+function createNewUser(e) {
+    e.preventDefault();
+    const nameInput = document.getElementById("new-username").value.trim().toLowerCase();
+    const passInput = document.getElementById("new-password").value.trim();
+    
+    if(!nameInput || !passInput) return;
+    
+    let users = getUsers();
+    
+    // Проверка за дублиране на потребителското име
+    if (users.some(u => u.username === nameInput)) {
+        alert("Това потребителско име вече е заето!");
+        return;
+    }
+    
+    users.push({ username: nameInput, password: passInput, isRoot: false });
+    localStorage.setItem("systemUsers", JSON.stringify(users));
+    
+    document.getElementById("add-user-form").reset();
+    renderUsersList();
+    alert(`Потребителят ${nameInput} е добавен успешно!`);
+}
+
+// НОВА ФУНКЦИЯ: Извеждане на списъка с потребители и бутон за триене
+function renderUsersList() {
+    const users = getUsers();
+    const container = document.getElementById("users-list");
+    
+    container.innerHTML = users.map(u => `
+        <div class="flex justify-between items-center bg-gray-100 p-2 rounded border border-gray-200">
+            <span class="font-medium text-gray-700">👤 ${u.username} ${u.isRoot ? '<span class="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded ml-1">Главен</span>' : ''}</span>
+            <div class="flex items-center gap-3">
+                <span class="text-gray-400 font-mono text-[11px]">парола: ${u.password}</span>
+                ${!u.isRoot ? `<button onclick="deleteUser('${u.username}')" class="text-red-500 hover:text-red-700 font-bold ml-2">✕</button>` : ''}
+            </div>
+        </div>
+    `).join("");
+}
+
+// НОВА ФУНКЦИЯ: Премахване на потребител
+function deleteUser(username) {
+    if (confirm(`Сигурни ли сте, че искате да изтриете профила на "${username}"?`)) {
+        let users = getUsers();
+        users = users.filter(u => u.username !== username);
+        localStorage.setItem("systemUsers", JSON.stringify(users));
+        renderUsersList();
+    }
+}
+
+// --- ОТТУК НАДОЛУ ОСТАВА ОРИГИНАЛНИЯТ КОД ЗА УПРАВЛЕНИЕ НА АРТИКУЛИТЕ ---
 function getMenu() {
     const localData = localStorage.getItem("restaurantMenu");
     return localData ? JSON.parse(localData) : [];
