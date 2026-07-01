@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     const savedName = localStorage.getItem("restaurantName") || "Моето заведение";
     document.getElementById("restaurant-name-input").value = savedName;
-    
     renderAdminMenu();
 });
 
@@ -20,23 +19,53 @@ function saveRestaurantName() {
     alert("Името е запазено!");
 }
 
-// Първоначален импорт от Excel / CSV
+// НОВО: Функция за автоматично вграждане на примерен шаблон в базата данни
+function generateBuiltInTemplate(type) {
+    let sampleData = [];
+    
+    if (type === 'cafe') {
+        localStorage.setItem("restaurantName", "Арома Кафе & Бар");
+        document.getElementById("restaurant-name-input").value = "Арома Кафе & Бар";
+        sampleData = [
+            { id: 101, name: "Еспресо Класик", category: "Топли напитки", price: 1.80, description: "Силно и ароматно късо кафе.", image: "https://images.unsplash.com/photo-1510972527409-cac236c514f5?w=200", available: true },
+            { id: 102, name: "Капучино", category: "Топли напитки", price: 2.50, description: "С гъста млечна пяна и щипка канела.", image: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=200", available: true },
+            { id: 103, name: "Домашна Лимонада", category: "Напитки", price: 3.20, description: "С пресен лимонов сок, мента и мед.", image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=200", available: true },
+            { id: 104, name: "Шоколадов Брауни", category: "Десерти", price: 3.80, description: "Топъл десерт с топка ванилов сладолед.", image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=200", available: true }
+        ];
+    } else if (type === 'restaurant') {
+        localStorage.setItem("restaurantName", "Ресторант 'Балкани'");
+        document.getElementById("restaurant-name-input").value = "Ресторант 'Балкани'";
+        sampleData = [
+            { id: 201, name: "Билков Чай", category: "Топли напитки", price: 1.90, description: "Микс от планински билки с лимон.", image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=200", available: true },
+            { id: 202, name: "Шопска Салата", category: "Салати", price: 4.80, description: "Домати, краставици, пресен пипер, лук и родно сирене.", image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200", available: true },
+            { id: 203, name: "Пилешка Пържола", category: "Основни", price: 8.50, description: "Крехко пилешко филе на грил с гарнитура картофки.", image: "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=200", available: true }
+        ];
+    }
+
+    const currentMenu = getMenu();
+    // Комбинираме текущото меню с новите шаблони
+    const updatedMenu = [...currentMenu, ...sampleData];
+    saveMenu(updatedMenu);
+    
+    alert("Шаблонът е генериран успешно! Можете да го разгледате в списъка или на клиентската страница.");
+}
+
+function clearAllMenu() {
+    if (confirm("Сигурни ли сте, че искате да изтриете абсолютно всички артикули от менюто?")) {
+        saveMenu([]);
+    }
+}
+
+// По-надолу остава твоят оригинален и работещ код за Excel/Ръчно добавяне
 function importFile() {
     const fileInput = document.getElementById("file-import");
     const file = fileInput.files[0];
-    
-    if (!file) {
-        alert("Моля, първо изберете файл!");
-        return;
-    }
-
+    if (!file) { alert("Моля, първо изберете файл!"); return; }
     const reader = new FileReader();
     const fileType = file.name.split('.').pop().toLowerCase();
-
     reader.onload = function(e) {
         const data = e.target.result;
         let importedData = [];
-
         try {
             if (fileType === 'csv') {
                 const text = new TextDecoder("utf-8").decode(data);
@@ -47,76 +76,53 @@ function importFile() {
                 const worksheet = workbook.Sheets[firstSheetName];
                 importedData = XLSX.utils.sheet_to_json(worksheet);
             }
-
             processAndSaveImportedMenu(importedData);
         } catch (error) {
             console.error(error);
-            alert("Грешка при четене на файла! Проверете дали структурата му е правилна.");
+            alert("Грешка при четене на файла!");
         }
     };
-
-    if (fileType === 'csv') {
-        reader.readAsArrayBuffer(file);
-    } else {
-        reader.readAsBinaryString(file);
-    }
+    if (fileType === 'csv') { reader.readAsArrayBuffer(file); } else { reader.readAsBinaryString(file); }
 }
 
 function parseCSV(text) {
     const lines = text.split("\n");
     const headers = lines[0].split(",").map(h => h.trim());
     const result = [];
-
     for (let i = 1; i < lines.length; i++) {
         if (!lines[i].trim()) continue;
         const currentLine = lines[i].split(",");
         const obj = {};
-        headers.forEach((header, index) => {
-            obj[header] = currentLine[index] ? currentLine[index].trim() : "";
-        });
+        headers.forEach((header, index) => { obj[header] = currentLine[index] ? currentLine[index].trim() : ""; });
         result.push(obj);
     }
     return result;
 }
 
 function processAndSaveImportedMenu(data) {
-    if (data.length === 0) {
-        alert("Файлът е празен!");
-        return;
-    }
-
+    if (data.length === 0) { alert("Файлът е празен!"); return; }
     const currentMenu = getMenu();
-
     data.forEach((row, index) => {
         const name = row["Име"] || row["name"] || row["Name"];
         const category = row["Категория"] || row["category"] || row["Category"] || "Други";
         const price = parseFloat(row["Цена"] || row["price"] || row["Price"] || 0);
         const description = row["Описание"] || row["description"] || row["Description"] || "";
         const image = row["Снимка"] || row["image"] || row["Image"] || "https://via.placeholder.com/150";
-
         if (name) {
-            currentMenu.push({
-                id: Date.now() + index,
-                name: name,
-                category: category,
-                price: price,
-                description: description,
-                image: image,
-                available: true
-            });
+            currentMenu.push({ id: Date.now() + index, name: name, category: category, price: price, description: description, image: image, available: true });
         }
     });
-
     saveMenu(currentMenu);
-    alert(`Успешно импортирахте нови артикули във вашето меню!`);
+    alert(`Успешно импортирахте нови артикули!`);
     document.getElementById("file-import").value = ""; 
 }
 
 function downloadTemplate() {
-    const csvContent = "data:text/csv;charset=utf-8,Име,Категория,Цена,Описание,Снимка\nШопска Салата,Салати,4.50,Класическа рецепта,\nЕспресо,Топли напитки,1.80,Ароматно и късо,";
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = "\ufeffИме,Категория,Цена,Описание,Снимка\nШопска Салата,Салати,4.50,Класическа рецепта,\nЕспресо,Топли напитки,1.80,Ароматно и късо,";
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", "shablon_menu.csv");
     document.body.appendChild(link);
     link.click();
@@ -165,7 +171,5 @@ function toggleAvailability(id) {
 }
 
 function deleteItem(id) {
-    if (confirm("Изтриване?")) {
-        saveMenu(getMenu().filter(item => item.id !== id));
-    }
+    if (confirm("Изтриване?")) { saveMenu(getMenu().filter(item => item.id !== id)); }
 }
