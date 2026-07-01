@@ -19,10 +19,8 @@ function saveRestaurantName() {
     alert("Името е запазено!");
 }
 
-// НОВО: Функция за автоматично вграждане на примерен шаблон в базата данни
 function generateBuiltInTemplate(type) {
     let sampleData = [];
-    
     if (type === 'cafe') {
         localStorage.setItem("restaurantName", "Арома Кафе & Бар");
         document.getElementById("restaurant-name-input").value = "Арома Кафе & Бар";
@@ -41,22 +39,15 @@ function generateBuiltInTemplate(type) {
             { id: 203, name: "Пилешка Пържола", category: "Основни", price: 8.50, description: "Крехко пилешко филе на грил с гарнитура картофки.", image: "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=200", available: true }
         ];
     }
-
     const currentMenu = getMenu();
-    // Комбинираме текущото меню с новите шаблони
-    const updatedMenu = [...currentMenu, ...sampleData];
-    saveMenu(updatedMenu);
-    
-    alert("Шаблонът е генериран успешно! Можете да го разгледате в списъка или на клиентската страница.");
+    saveMenu([...currentMenu, ...sampleData]);
+    alert("Шаблонът е генериран успешно!");
 }
 
 function clearAllMenu() {
-    if (confirm("Сигурни ли сте, че искате да изтриете абсолютно всички артикули от менюто?")) {
-        saveMenu([]);
-    }
+    if (confirm("Сигурни ли сте, че искате да изтриете абсолютно всички артикули?")) { saveMenu([]); cancelEditing(); }
 }
 
-// По-надолу остава твоят оригинален и работещ код за Excel/Ръчно добавяне
 function importFile() {
     const fileInput = document.getElementById("file-import");
     const file = fileInput.files[0];
@@ -77,10 +68,7 @@ function importFile() {
                 importedData = XLSX.utils.sheet_to_json(worksheet);
             }
             processAndSaveImportedMenu(importedData);
-        } catch (error) {
-            console.error(error);
-            alert("Грешка при четене на файла!");
-        }
+        } catch (error) { console.error(error); alert("Грешка при четене на файла!"); }
     };
     if (fileType === 'csv') { reader.readAsArrayBuffer(file); } else { reader.readAsBinaryString(file); }
 }
@@ -138,31 +126,88 @@ function renderAdminMenu() {
                 <h3 class="font-bold text-gray-800">${item.name} <span class="text-xs text-gray-400">(${item.category})</span></h3>
                 <p class="text-sm text-amber-600 font-semibold">&euro;${Number(item.price).toFixed(2)}</p>
             </div>
-            <div class="flex items-center gap-3">
-                <button onclick="toggleAvailability(${item.id})" class="px-3 py-1 rounded text-xs font-semibold transition ${item.available ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}">
+            <div class="flex items-center gap-2">
+                <button onclick="toggleAvailability(${item.id})" class="px-2.5 py-1 rounded text-xs font-semibold transition ${item.available ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}">
                     ${item.available ? 'Налично' : 'Изчерпано'}
                 </button>
-                <button onclick="deleteItem(${item.id})" class="bg-gray-100 text-gray-500 hover:text-red-600 p-2 rounded">Изтрий</button>
+                <button onclick="editItem(${item.id})" class="bg-amber-50 text-amber-700 hover:bg-amber-100 px-2.5 py-1 rounded text-xs font-semibold transition">
+                    Редактирай
+                </button>
+                <button onclick="deleteItem(${item.id})" class="bg-gray-100 text-gray-500 hover:text-red-600 p-1.5 rounded text-xs">Изтрий</button>
             </div>
         </div>
     `).join("");
 }
 
+// НУЖНО СЪБИТИЕ: Обработва както Добавяне, така и Редактиране
 document.getElementById("add-dish-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const menu = getMenu();
-    menu.push({
-        id: Date.now(),
+    const editId = document.getElementById("edit-item-id").value;
+
+    const dishData = {
         name: document.getElementById("dish-name").value,
         category: document.getElementById("dish-category").value,
         price: parseFloat(document.getElementById("dish-price").value),
         image: document.getElementById("dish-image").value,
-        description: document.getElementById("dish-desc").value,
-        available: true
-    });
-    saveMenu(menu);
-    e.target.reset();
+        description: document.getElementById("dish-desc").value
+    };
+
+    if (editId) {
+        // Режим Редактиране: Намираме стария елемент и го обновяваме запазвайки ID и наличност
+        const updatedMenu = menu.map(item => {
+            if (item.id == editId) {
+                return { ...item, ...dishData };
+            }
+            return item;
+        });
+        saveMenu(updatedMenu);
+        cancelEditing(); // Връщаме формата в начално състояние
+    } else {
+        // Режим Добавяне
+        menu.push({
+            id: Date.now(),
+            ...dishData,
+            available: true
+        });
+        saveMenu(menu);
+        e.target.reset();
+    }
 });
+
+// НОВА ФУНКЦИЯ: Качва данните от списъка горе във формата за редакция
+function editItem(id) {
+    const menu = getMenu();
+    const item = menu.find(i => i.id === id);
+    if (!item) return;
+
+    // Попълваме стойностите във формата
+    document.getElementById("edit-item-id").value = item.id;
+    document.getElementById("dish-name").value = item.name;
+    document.getElementById("dish-category").value = item.category;
+    document.getElementById("dish-price").value = item.price;
+    document.getElementById("dish-image").value = item.image;
+    document.getElementById("dish-desc").value = item.description;
+
+    // Сменяме текстовете на формата и показваме бутона за отказ
+    document.getElementById("form-title").innerText = "Редактирай артикул";
+    document.getElementById("submit-btn").innerText = "Запази промените";
+    document.getElementById("cancel-edit-btn").classList.remove("hidden");
+
+    // Скролваме леко нагоре до формата, за да види потребителят какво прави
+    document.getElementById("add-dish-form").scrollIntoView({ behavior: 'smooth' });
+}
+
+// НОВА ФУНКЦИЯ: Спира редактирането и нулира формата на чисто
+function cancelEditing() {
+    document.getElementById("edit-item-id").value = "";
+    document.getElementById("add-dish-form").reset();
+    document.getElementById("dish-image").value = "https://via.placeholder.com/150"; // Стойност по подразбиране
+    
+    document.getElementById("form-title").innerText = "Добави артикул ръчно";
+    document.getElementById("submit-btn").innerText = "Добави в менюто";
+    document.getElementById("cancel-edit-btn").classList.add("hidden");
+}
 
 function toggleAvailability(id) {
     let menu = getMenu();
@@ -171,5 +216,9 @@ function toggleAvailability(id) {
 }
 
 function deleteItem(id) {
-    if (confirm("Изтриване?")) { saveMenu(getMenu().filter(item => item.id !== id)); }
+    if (confirm("Изтриване?")) {
+        saveMenu(getMenu().filter(item => item.id !== id));
+        // Ако сме изтрили артикула, който редактираме в момента, затваряме режима за редакция
+        if (document.getElementById("edit-item-id").value == id) { cancelEditing(); }
+    }
 }
