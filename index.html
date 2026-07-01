@@ -3,33 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Дигитално Меню</title>
+    <title>Дигитално QR Меню</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    
     <style>
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Плавна анимация при скролване до категориите */
+        html {
+            scroll-behavior: smooth;
+        }
+        /* Скриване на скролбара за бутоните с категории (за по-изчистен дизайн) */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 font-sans antialiased min-h-screen">
+<body class="bg-gray-50 text-gray-900 font-sans pb-12">
 
-    <div class="max-w-md mx-auto bg-white min-h-screen shadow-lg flex flex-col">
-        
-        <header class="bg-amber-600 text-white text-center py-6 px-4 shadow-sm rounded-b-3xl relative">
-            <h1 class="text-2xl font-black tracking-wide truncate mt-2">Зареждане...</h1>
-            <p class="text-xs opacity-80 mt-1 uppercase tracking-wider font-semibold">Дигитално меню</p>
-        </header>
+    <header class="bg-amber-600 text-white text-center py-7 px-4 shadow-sm rounded-b-3xl relative">
+        <div class="absolute top-4 right-4 z-20">
+            <button onclick="toggleLanguage()" id="lang-btn" class="bg-white/20 hover:bg-white/30 backdrop-blur-md text-xs font-black px-3 py-1.5 rounded-full border border-white/30 transition flex items-center gap-1 cursor-pointer tracking-wider">
+                🌐 <span id="lang-text">EN</span>
+            </button>
+        </div>
 
-        <nav class="sticky top-0 bg-white/95 backdrop-blur-md shadow-xs py-3.5 px-4 flex gap-2.5 overflow-x-auto no-scrollbar z-10 border-b border-gray-100" id="categories-nav">
-            </nav>
+        <h1 class="text-2xl font-black tracking-wide truncate mt-2 pr-12" id="restaurant-title">Зареждане...</h1>
+        <p class="text-[11px] opacity-90 mt-1 uppercase tracking-widest font-bold" id="menu-subtitle">Дигитално меню</p>
+    </header>
 
-        <main class="px-4 pt-2 pb-16 flex-1" id="menu-container">
-            <div class="flex justify-center items-center py-20">
-                <p class="text-gray-400 text-sm">Зареждане на менюто...</p>
+    <div class="sticky top-0 bg-white/80 backdrop-blur-md shadow-sm z-10 py-3 mt-2">
+        <div id="categories-nav" class="flex gap-2 overflow-x-auto px-4 no-scrollbar">
             </div>
-        </main>
-        
     </div>
+
+    <main class="max-w-md mx-auto px-4 mt-4 space-y-8" id="menu-container">
+        </main>
+
+    <footer class="text-center text-gray-400 text-[10px] mt-12 pb-6">
+        <p>© 2026 Всички права запазени.</p>
+    </footer>
 
     <script src="app.js"></script>
 </body>
