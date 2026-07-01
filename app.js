@@ -1,95 +1,179 @@
-const restaurantName = localStorage.getItem("restaurantName") || "Нашето заведение";
-const paperMenu = localStorage.getItem("paperMenuImage");
-const menuData = JSON.parse(localStorage.getItem("restaurantMenu")) || [];
+// Глобално състояние на езика (По подразбиране е BG)
+let currentLang = 'BG';
+
+// Речник за превод на системните текстове на интерфейса
+const translations = {
+    BG: {
+        subtitle: "Дигитално меню",
+        allBtn: "Всички",
+        availableBadge: "Налично",
+        currency: "€",
+        langButton: "EN"
+    },
+    EN: {
+        subtitle: "Digital Menu",
+        allBtn: "All",
+        availableBadge: "Available",
+        currency: "€",
+        langButton: "BG"
+    }
+};
+
+// Речник за превод на имената на категориите
+const categoryTranslations = {
+    "Топли напитки": "Hot Drinks",
+    "Напитки": "Beverages",
+    "Салати": "Salads",
+    "Основни": "Main Dishes",
+    "Десерти": "Desserts"
+};
 
 document.addEventListener("DOMContentLoaded", () => {
-    const headerTitle = document.querySelector("header h1");
-    if (headerTitle) headerTitle.innerText = restaurantName;
-
     initMenu();
 });
 
+// Основна функция за зареждане на менюто
 function initMenu() {
-    const container = document.getElementById("menu-container");
-    const nav = document.getElementById("categories-nav");
+    // 1. Зареждане на името на ресторанта
+    const savedName = localStorage.getItem("restaurantName") || "Ресторант 'Балкани'";
+    document.getElementById("restaurant-title").innerText = savedName;
 
-    if (paperMenu) {
-        if (nav) nav.style.display = "none"; 
+    // 2. Вземане на артикулите от localStorage
+    const localData = localStorage.getItem("restaurantMenu");
+    const menuItems = localData ? JSON.parse(localData) : [];
+
+    // Филтрираме само НАЛИЧНИТЕ артикули (Изчерпаните не се показват на клиентите)
+    const availableItems = menuItems.filter(item => item.available !== false);
+
+    // 3. Извличане на уникалните категории от наличните артикули
+    const categories = [...new Set(availableItems.map(item => item.category))];
+
+    renderCategoriesNav(categories);
+    renderMenuContent(availableItems, categories);
+}
+
+// Генериране на навигационната лента с категории
+function renderCategoriesNav(categories) {
+    const nav = document.getElementById("categories-nav");
+    const t = translations[currentLang];
+
+    // Бутон "Всички"
+    let html = `
+        <button onclick="scrollToCategory('all')" class="category-btn bg-amber-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-sm transition whitespace-nowrap cursor-pointer">
+            ${t.allBtn}
+        </button>
+    `;
+
+    // Бутони за всяка отделна категория
+    categories.forEach(cat => {
+        const displayName = currentLang === 'EN' && categoryTranslations[cat] ? categoryTranslations[cat] : cat;
+        html += `
+            <button onclick="scrollToCategory('${cat}')" class="category-btn bg-gray-100 text-gray-600 hover:bg-gray-200 text-xs font-semibold px-4 py-2 rounded-full transition whitespace-nowrap cursor-pointer">
+                ${displayName}
+            </button>
+        `;
+    });
+
+    nav.innerHTML = html;
+}
+
+// Визуализиране на ястията, групирани по категории
+function renderMenuContent(items, categories) {
+    const container = document.getElementById("menu-container");
+    const t = translations[currentLang];
+
+    if (items.length === 0) {
         container.innerHTML = `
-            <div class="mt-4 text-center">
-                <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-xs px-3 py-1 rounded-full font-medium mb-3">
-                    📄 Разгледайте нашето хартиено меню
-                </span>
-                <p class="text-xs text-gray-400 mb-4">Можете да приближите снимката с два пръста (pinch-to-zoom)</p>
-                <div class="overflow-hidden rounded-2xl shadow-xl border border-gray-200 bg-white">
-                    <img src="${paperMenu}" alt="Menu" class="w-full h-auto object-contain cursor-zoom-in active:scale-105 transition-transform duration-200">
-                </div>
+            <div class="text-center py-12 text-gray-400 text-sm">
+                📢 Менюто е празно или няма налични артикули в момента.
             </div>
         `;
-    } else {
-        if (nav) nav.style.display = "flex"; 
-        renderCategories();
-        renderMenu("Всички");
-    }
-}
-
-function renderCategories() {
-    const nav = document.getElementById("categories-nav");
-    if (!nav) return;
-
-    // Взимаме динамично категориите от базата данни
-    const categories = ["Всички", ...new Set(menuData.map(item => item.category))];
-
-    nav.innerHTML = categories.map(cat => `
-        <button onclick="filterCategory('${cat}', this)" 
-                class="category-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-200
-                ${cat === 'Всички' ? 'bg-amber-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
-            ${cat}
-        </button>
-    `).join("");
-}
-
-function filterCategory(category, button) {
-    document.querySelectorAll(".category-btn").forEach(btn => {
-        btn.classList.remove("bg-amber-600", "text-white", "shadow-sm");
-        btn.classList.add("bg-gray-100", "text-gray-600");
-    });
-    button.classList.remove("bg-gray-100", "text-gray-600");
-    button.classList.add("bg-amber-600", "text-white", "shadow-sm");
-    renderMenu(category);
-}
-
-function renderMenu(selectedCategory) {
-    const container = document.getElementById("menu-container");
-    if (!container) return;
-    
-    const filteredItems = selectedCategory === "Всички" 
-        ? menuData 
-        : menuData.filter(item => item.category === selectedCategory);
-
-    if (filteredItems.length === 0) {
-        container.innerHTML = `<div class="text-center py-12"><p class="text-gray-400 text-sm">Няма въведени артикули в тази категория.</p></div>`;
         return;
     }
 
-    container.innerHTML = filteredItems.map(item => `
-        <div class="bg-white rounded-2xl shadow-xs overflow-hidden flex my-3 border border-gray-100 transition-all ${!item.available ? 'opacity-40 filter grayscale' : ''}">
-            <img src="${item.image || 'https://via.placeholder.com/150'}" alt="${item.name}" class="w-24 h-24 md:w-28 md:h-28 object-cover flex-shrink-0">
-            <div class="p-3 flex flex-col justify-between flex-1 min-w-0">
-                <div>
-                    <div class="flex justify-between items-start gap-2">
-                        <h3 class="font-bold text-gray-800 truncate text-base">${item.name}</h3>
-                        <span class="text-amber-600 font-extrabold text-sm flex-shrink-0">&euro;${Number(item.price).toFixed(2)}</span>
+    let html = "";
+
+    categories.forEach(category => {
+        const categoryItems = items.filter(item => item.category === category);
+        const displayCategoryName = currentLang === 'EN' && categoryTranslations[category] ? categoryTranslations[category] : category;
+
+        html += `
+            <section id="sec-${category}" class="space-y-3 scroll-mt-24">
+                <h2 class="text-sm font-black text-gray-400 uppercase tracking-wider pl-1 border-l-3 border-amber-600">${displayCategoryName}</h2>
+                <div class="space-y-3">
+        `;
+
+        categoryItems.forEach(item => {
+            const defaultImg = "https://via.placeholder.com/150";
+            const itemImg = item.image && item.image.trim() !== "" ? item.image : defaultImg;
+
+            html += `
+                <div class="bg-white p-3 rounded-2xl shadow-xs border border-gray-100 flex gap-3 items-center">
+                    <img src="${itemImg}" alt="${item.name}" class="w-20 h-20 object-cover rounded-xl bg-gray-100 flex-shrink-0" onerror="this.src='${defaultImg}'">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start gap-2">
+                            <h3 class="font-bold text-gray-800 text-sm truncate">${item.name}</h3>
+                            <span class="text-amber-600 font-extrabold text-sm flex-shrink-0">${t.currency}${Number(item.price).toFixed(2)}</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1 line-clamp-2">${item.description || ''}</p>
+                        <div class="mt-2">
+                            <span class="inline-flex items-center gap-1 text-[10px] bg-green-50 text-green-700 font-bold px-2 py-0.5 rounded-md">
+                                <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                ${t.availableBadge}
+                            </span>
+                        </div>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1 line-clamp-2">${item.description || ''}</p>
                 </div>
-                <div class="flex justify-between items-center mt-1">
-                    ${item.available 
-                        ? `<span class="inline-flex items-center text-[11px] text-green-600 bg-green-50 px-2 py-0.5 rounded font-medium">● Налично</span>` 
-                        : `<span class="inline-flex items-center text-[11px] text-red-500 bg-red-50 px-2 py-0.5 rounded font-medium">✕ Изчерпано</span>`
-                    }
+            `;
+        });
+
+        html += `
                 </div>
-            </div>
-        </div>
-    `).join("");
+            </section>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+// Плавно скролване до избраната секция и визуално активиране на бутона
+function scrollToCategory(categoryName) {
+    // Деактивиране на стария активен бутон
+    document.querySelectorAll(".category-btn").forEach(btn => {
+        btn.classList.remove("bg-amber-600", "text-white", "font-bold");
+        btn.classList.add("bg-gray-100", "text-gray-600", "font-semibold");
+    });
+
+    // Маркиране на кликнатия бутон като активен
+    const clickedBtn = event.currentTarget;
+    clickedBtn.classList.remove("bg-gray-100", "text-gray-600", "font-semibold");
+    clickedBtn.classList.add("bg-amber-600", "text-white", "font-bold");
+
+    if (categoryName === 'all') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        const element = document.getElementById(`sec-${categoryName}`);
+        if (element) element.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+// ФУНКЦИЯ ЗА ПРЕВКЛЮЧВАНЕ НА ЕЗИКА (Вика се от бутона в хедъра)
+function toggleLanguage() {
+    // Сменяме текущия език
+    currentLang = currentLang === 'BG' ? 'EN' : 'BG';
+
+    // 1. Обновяваме текста на самия бутон (ако сме на EN, бутонът предлага превключване към BG и обратно)
+    document.getElementById("lang-text").innerText = translations[currentLang].langButton;
+
+    // 2. Обновяваме подзаглавието в хедъра ("Дигитално меню" / "Digital Menu")
+    document.getElementById("menu-subtitle").innerText = translations[currentLang].subtitle;
+
+    // 3. Преначертаваме навигацията и съдържанието с новия език
+    const localData = localStorage.getItem("restaurantMenu");
+    const menuItems = localData ? JSON.parse(localData) : [];
+    const availableItems = menuItems.filter(item => item.available !== false);
+    const categories = [...new Set(availableItems.map(item => item.category))];
+
+    renderCategoriesNav(categories);
+    renderMenuContent(availableItems, categories);
 }
