@@ -1,16 +1,16 @@
-// Променлива за следене на текущия активиран език
+// Проверяваме езика на телефона на клиента при отваряне
 let currentLang = navigator.language.startsWith('en') ? 'EN' : 'BG';
 
 document.addEventListener("DOMContentLoaded", () => {
     initMenu();
     
-    // Автоматично задействане на езика според телефона при първо зареждане
-    setTimeout(() => {
-        if (currentLang === 'EN') {
+    // Автоматично стартиране на английски, ако езикът на телефона е такъв
+    if (currentLang === 'EN') {
+        setTimeout(() => {
             triggerGoogleTranslate('en');
             document.getElementById("lang-text").innerText = "BG";
-        }
-    }, 1000); // Малко изчакване, за да зареди скрипта на Google
+        }, 1200); // Изчакване за сигурно зареждане на библиотеката на Google
+    }
 });
 
 function initMenu() {
@@ -20,7 +20,6 @@ function initMenu() {
     const localData = localStorage.getItem("restaurantMenu");
     const menuItems = localData ? JSON.parse(localData) : [];
 
-    // Показваме само наличните
     const availableItems = menuItems.filter(item => item.available !== false);
     const categories = [...new Set(availableItems.map(item => item.category))];
 
@@ -82,16 +81,26 @@ function renderMenuContent(items, categories) {
     container.innerHTML = html;
 }
 
-// ФУНКЦИЯ, КОЯТО КЛИКВА ВЪРХУ СКРИТИЯ СЕЛЕКТОР НА GOOGLE TRANSLATE
+// МОДЕРНИЗИРАН НАЧИН ЗА ПРИНУДИТЕЛНО СТАРТИРАНЕ НА ПРЕВОДА НА GOOGLE
 function triggerGoogleTranslate(langCode) {
-    const translateSelect = document.querySelector('.goog-te-combo');
-    if (translateSelect) {
-        translateSelect.value = langCode;
-        translateSelect.dispatchEvent(new Event('change'));
+    const selectEl = document.querySelector('.goog-te-combo');
+    if (selectEl) {
+        selectEl.value = langCode;
+        
+        // Създаваме native браузърно събитие, за да излъжем защитите на скрипта
+        if (document.createEvent) {
+            const event = document.createEvent('HTMLEvents');
+            event.initEvent('change', true, true);
+            selectEl.dispatchEvent(event);
+        } else {
+            const event = document.createEventObject();
+            event.eventType = 'change';
+            selectEl.fireEvent('onchange', event);
+        }
     }
 }
 
-// РЪЧНО ПРЕВКЛЮЧВАНЕ ОТ НАШИЯ БУТОН
+// РЪЧНО КЛИКАНЕ НА НАШИЯ БУТОН СИ СМЕНЯ ТЕКСТА
 function toggleGoogleLanguage() {
     const langText = document.getElementById("lang-text");
     if (currentLang === 'BG') {
