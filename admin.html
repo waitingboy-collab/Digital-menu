@@ -10,13 +10,11 @@
 <body class="bg-gray-100 text-gray-900 font-sans p-4">
 
     <div class="max-w-2xl mx-auto">
-        <!-- Хедър -->
         <header class="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm">
             <h1 class="text-xl font-bold text-gray-800">Управление на менюто</h1>
             <a href="index.html" class="text-sm text-amber-600 hover:underline">← Към менюто за клиенти</a>
         </header>
 
-        <!-- Настройки на заведението -->
         <section class="bg-white p-5 rounded-xl shadow-sm mb-6">
             <h2 class="text-lg font-bold mb-3 text-gray-700">Настройки на заведението</h2>
             <div>
@@ -28,7 +26,6 @@
             </div>
         </section>
 
-        <!-- Импорт от Excel / CSV -->
         <section class="bg-white p-5 rounded-xl shadow-sm mb-6">
             <h2 class="text-lg font-bold mb-1 text-gray-700">Импорт от Excel / CSV файл</h2>
             <p class="text-xs text-gray-500 mb-4">Качете файл, за да заредите цялото меню наведнъж. Колоните трябва да са: Име, Категория, Цена, Описание, Снимка.</p>
@@ -42,7 +39,6 @@
             </div>
         </section>
 
-        <!-- НОВО: Бутони за моментално генериране на готов шаблон в базата данни -->
         <section class="bg-white p-5 rounded-xl shadow-sm mb-6">
             <h2 class="text-lg font-bold mb-1 text-gray-700">Автоматичен генератор на меню</h2>
             <p class="text-xs text-gray-500 mb-3">Ако нямате готов Excel файл, кликнете върху бутон по-долу, за да създадем примерно меню веднага.</p>
@@ -59,10 +55,11 @@
             </div>
         </section>
 
-        <!-- Форма за ръчно добавяне -->
         <section class="bg-white p-5 rounded-xl shadow-sm mb-6">
-            <h2 class="text-lg font-bold mb-4 text-gray-700">Добави артикул ръчно</h2>
+            <h2 id="form-title" class="text-lg font-bold mb-4 text-gray-700">Добави артикул ръчно</h2>
             <form id="add-dish-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="hidden" id="edit-item-id" value="">
+
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Име на ястието</label>
                     <input type="text" id="dish-name" required class="w-full border p-2 rounded-lg text-sm focus:outline-amber-600">
@@ -89,13 +86,13 @@
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Описание / Алергени</label>
                     <textarea id="dish-desc" rows="2" class="w-full border p-2 rounded-lg text-sm focus:outline-amber-600"></textarea>
                 </div>
-                <div class="md:col-span-2">
-                    <button type="submit" class="w-full bg-amber-600 text-white font-bold py-2 rounded-lg hover:bg-amber-700 transition">Добави в менюто</button>
+                <div class="md:col-span-2 flex gap-2">
+                    <button type="submit" id="submit-btn" class="flex-1 bg-amber-600 text-white font-bold py-2 rounded-lg hover:bg-amber-700 transition">Добави в менюто</button>
+                    <button type="button" id="cancel-edit-btn" onclick="cancelEditing()" class="hidden bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition">Отказ</button>
                 </div>
             </form>
         </section>
 
-        <!-- Списък с текущите артикули -->
         <section class="bg-white p-5 rounded-xl shadow-sm">
             <h2 class="text-lg font-bold mb-4 text-gray-700">Текущи артикули</h2>
             <div id="admin-menu-list" class="divide-y divide-gray-100"></div>
