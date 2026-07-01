@@ -1,8 +1,52 @@
+// ВАШЕ ТУК: Настройте желаната парола за достъп
+const ADMIN_PASSWORD = "admin1234";
+
 document.addEventListener("DOMContentLoaded", () => {
+    // Проверяваме дали потребителят вече е влизал успешно в тази сесия
+    if (sessionStorage.getItem("adminLoggedIn") === "true") {
+        showAdminPanel();
+    } else {
+        initLoginScreen();
+    }
+});
+
+// Логика за екрана за вход
+function initLoginScreen() {
+    document.getElementById("login-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const inputPass = document.getElementById("admin-password").value;
+        const errorMsg = document.getElementById("login-error");
+
+        if (inputPass === ADMIN_PASSWORD) {
+            sessionStorage.setItem("adminLoggedIn", "true");
+            errorMsg.classList.add("hidden");
+            showAdminPanel();
+        } else {
+            errorMsg.classList.remove("hidden");
+            document.getElementById("admin-password").value = "";
+        }
+    });
+}
+
+// Превключване на изгледа и зареждане на данните
+function showAdminPanel() {
+    // Променяме стиловете на бодито, за да пасне на голямата таблица
+    document.body.className = "bg-gray-100 text-gray-900 font-sans p-4";
+    
+    document.getElementById("login-screen").classList.add("hidden");
+    document.getElementById("admin-content").classList.remove("hidden");
+    
+    // Зареждаме и рендерираме оригиналните данни
     const savedName = localStorage.getItem("restaurantName") || "Моето заведение";
     document.getElementById("restaurant-name-input").value = savedName;
     renderAdminMenu();
-});
+}
+
+// Изход от системата
+function logoutAdmin() {
+    sessionStorage.removeItem("adminLoggedIn");
+    window.location.reload(); // Презареждаме, за да заключим страницата обратно
+}
 
 function getMenu() {
     const localData = localStorage.getItem("restaurantMenu");
@@ -139,12 +183,10 @@ function renderAdminMenu() {
     `).join("");
 }
 
-// НУЖНО СЪБИТИЕ: Обработва както Добавяне, така и Редактиране
 document.getElementById("add-dish-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const menu = getMenu();
     const editId = document.getElementById("edit-item-id").value;
-
     const dishData = {
         name: document.getElementById("dish-name").value,
         category: document.getElementById("dish-category").value,
@@ -152,58 +194,37 @@ document.getElementById("add-dish-form").addEventListener("submit", (e) => {
         image: document.getElementById("dish-image").value,
         description: document.getElementById("dish-desc").value
     };
-
     if (editId) {
-        // Режим Редактиране: Намираме стария елемент и го обновяваме запазвайки ID и наличност
-        const updatedMenu = menu.map(item => {
-            if (item.id == editId) {
-                return { ...item, ...dishData };
-            }
-            return item;
-        });
+        const updatedMenu = menu.map(item => item.id == editId ? { ...item, ...dishData } : item);
         saveMenu(updatedMenu);
-        cancelEditing(); // Връщаме формата в начално състояние
+        cancelEditing();
     } else {
-        // Режим Добавяне
-        menu.push({
-            id: Date.now(),
-            ...dishData,
-            available: true
-        });
+        menu.push({ id: Date.now(), ...dishData, available: true });
         saveMenu(menu);
         e.target.reset();
     }
 });
 
-// НОВА ФУНКЦИЯ: Качва данните от списъка горе във формата за редакция
 function editItem(id) {
     const menu = getMenu();
     const item = menu.find(i => i.id === id);
     if (!item) return;
-
-    // Попълваме стойностите във формата
     document.getElementById("edit-item-id").value = item.id;
     document.getElementById("dish-name").value = item.name;
     document.getElementById("dish-category").value = item.category;
     document.getElementById("dish-price").value = item.price;
     document.getElementById("dish-image").value = item.image;
     document.getElementById("dish-desc").value = item.description;
-
-    // Сменяме текстовете на формата и показваме бутона за отказ
     document.getElementById("form-title").innerText = "Редактирай артикул";
     document.getElementById("submit-btn").innerText = "Запази промените";
     document.getElementById("cancel-edit-btn").classList.remove("hidden");
-
-    // Скролваме леко нагоре до формата, за да види потребителят какво прави
     document.getElementById("add-dish-form").scrollIntoView({ behavior: 'smooth' });
 }
 
-// НОВА ФУНКЦИЯ: Спира редактирането и нулира формата на чисто
 function cancelEditing() {
     document.getElementById("edit-item-id").value = "";
     document.getElementById("add-dish-form").reset();
-    document.getElementById("dish-image").value = "https://via.placeholder.com/150"; // Стойност по подразбиране
-    
+    document.getElementById("dish-image").value = "https://via.placeholder.com/150";
     document.getElementById("form-title").innerText = "Добави артикул ръчно";
     document.getElementById("submit-btn").innerText = "Добави в менюто";
     document.getElementById("cancel-edit-btn").classList.add("hidden");
@@ -218,7 +239,6 @@ function toggleAvailability(id) {
 function deleteItem(id) {
     if (confirm("Изтриване?")) {
         saveMenu(getMenu().filter(item => item.id !== id));
-        // Ако сме изтрили артикула, който редактираме в момента, затваряме режима за редакция
         if (document.getElementById("edit-item-id").value == id) { cancelEditing(); }
     }
 }
