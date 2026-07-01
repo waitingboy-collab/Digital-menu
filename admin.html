@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Контролен панел - Меню</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Библиотека за четене на Excel (.xlsx/.xls) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body class="bg-gray-100 text-gray-900 font-sans p-4">
@@ -40,6 +39,23 @@
                     <button onclick="importFile()" class="bg-gray-800 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-gray-700">Зареди данните от файла</button>
                     <button onclick="downloadTemplate()" class="text-amber-700 hover:underline text-xs font-semibold">⬇ Свали примерен CSV шаблон</button>
                 </div>
+            </div>
+        </section>
+
+        <!-- НОВО: Бутони за моментално генериране на готов шаблон в базата данни -->
+        <section class="bg-white p-5 rounded-xl shadow-sm mb-6">
+            <h2 class="text-lg font-bold mb-1 text-gray-700">Автоматичен генератор на меню</h2>
+            <p class="text-xs text-gray-500 mb-3">Ако нямате готов Excel файл, кликнете върху бутон по-долу, за да създадем примерно меню веднага.</p>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="generateBuiltInTemplate('cafe')" class="bg-amber-100 text-amber-800 hover:bg-amber-200 text-xs font-bold px-3 py-2 rounded-lg transition">
+                    ☕ Зареди шаблон за Кафене/Бар
+                </button>
+                <button onclick="generateBuiltInTemplate('restaurant')" class="bg-blue-100 text-blue-800 hover:bg-blue-200 text-xs font-bold px-3 py-2 rounded-lg transition">
+                    🍔 Зареди шаблон за Ресторант
+                </button>
+                <button onclick="clearAllMenu()" class="bg-red-50 text-red-600 hover:bg-red-100 text-xs font-medium px-3 py-2 rounded-lg transition ml-auto">
+                    🗑 Изчисти цялото меню
+                </button>
             </div>
         </section>
 
@@ -86,7 +102,6 @@
         </section>
     </div>
 
-    <!-- ФИКСИРАН ПЪТ (Без папка js/) -->
     <script src="admin.js"></script>
 </body>
 </html>
