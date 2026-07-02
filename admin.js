@@ -3,7 +3,6 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Пазим масив с артикулите локално в паметта за бърза редакция
 let localItemsArray = []; 
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -21,7 +20,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("save-res-name-btn").addEventListener("click", saveRestaurantName);
 });
 
-// УПРАВЛЕНИЕ НА ИМЕТО НА ЗАВЕДЕНИЕТО
 function loadRestaurantName() {
     const savedName = localStorage.getItem("customRestaurantName") || "Ресторант 'Балкани'";
     document.getElementById("restaurant-name-input").value = savedName;
@@ -89,7 +87,7 @@ async function loadAdminMenu() {
 
         if (error) throw error;
 
-        localItemsArray = items; // Запазваме ги за редактирането
+        localItemsArray = items; 
         document.getElementById("items-count").innerText = `${items.length} позиции`;
         
         if (items.length === 0) {
@@ -128,7 +126,6 @@ async function loadAdminMenu() {
     }
 }
 
-// ОБЩА ФУНКЦИЯ ЗА ЗАПАЗВАНЕ (ДОБАВЯНЕ ИЛИ РЕДАКЦИЯ)
 async function handleFormSubmit(e) {
     e.preventDefault();
 
@@ -141,7 +138,6 @@ async function handleFormSubmit(e) {
 
     try {
         if (id) {
-            // АКО ИМА ID -> РЕЖИМ НА РЕДАКЦИЯ (UPDATE)
             const { error } = await supabaseClient
                 .from('menu_items')
                 .update({ name, category, price, description, image })
@@ -150,12 +146,12 @@ async function handleFormSubmit(e) {
             if (error) throw error;
             alert("Артикулът е редактиран успешно!");
         } else {
-            // АКО НЯМА ID -> РЕЖИМ НА ДОБАВЯНЕ (INSERT)
             const { error } = await supabaseClient
                 .from('menu_items')
                 .insert([{ name, category, price, description, image, available: true }]);
 
             if (error) throw error;
+            alert("Артикулът е добавен успешно!");
         }
 
         resetForm();
@@ -166,7 +162,6 @@ async function handleFormSubmit(e) {
     }
 }
 
-// ПОПЪЛВАНЕ НА ФОРМАТА ПРИ НАТИСКАНЕ НА "РЕДАКТИРАЙ"
 function startEditItem(id) {
     const item = localItemsArray.find(i => i.id === id);
     if (!item) return;
@@ -178,13 +173,11 @@ function startEditItem(id) {
     document.getElementById("item-desc").value = item.description || "";
     document.getElementById("item-image").value = item.image || "";
 
-    // Сменяме текстовете на формата
     document.getElementById("form-title").innerText = "✏️ Редактиране на артикул";
     document.getElementById("submit-form-btn").innerText = "💾 Запази промените";
     document.getElementById("submit-form-btn").classList.replace("bg-green-600", "bg-amber-600");
     document.getElementById("submit-form-btn").classList.replace("hover:bg-green-700", "hover:bg-amber-700");
     
-    // Скролваме нагоре до формата за удобство
     document.getElementById("form-title").scrollIntoView({ behavior: 'smooth' });
 }
 
