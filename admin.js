@@ -1,4 +1,4 @@
-// КОНФИГУРАЦИЯ НА SUPABASE (Същата като в app.js)
+// КОНФИГУРАЦИЯ НА SUPABASE
 const SUPABASE_URL = "https://rhqirgmxfaeqsihuvqym.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJocWlyZ214ZmFlcXNpaHV2cXltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5OTUwOTQsImV4cCI6MjA5ODU3MTA5NH0.ua9LKCdXgTP9cp48t_DGmHyixBqk4F0dJf424B20vec";
 
@@ -26,6 +26,9 @@ async function handleLogin() {
     const password = document.getElementById("login-password").value.trim();
     const errorEl = document.getElementById("login-error");
 
+    errorEl.classList.add("hidden");
+    errorEl.innerText = "";
+
     if (!email || !password) {
         errorEl.innerText = "Моля, попълнете всички полета.";
         errorEl.classList.remove("hidden");
@@ -41,10 +44,10 @@ async function handleLogin() {
         if (error) throw error;
 
         showDashboard();
-    } {
-        errorEl.innerText = "Грешен имейл или парола!";
+    } catch (error) { // ТУК беше грешката (липсваше думата catch)
+        errorEl.innerText = "Грешен имейл, парола или непотвърден профил!";
         errorEl.classList.remove("hidden");
-        console.error(error);
+        console.error("Грешка при вход:", error.message);
     }
 }
 
@@ -134,9 +137,9 @@ async function handleAddItem(e) {
         if (error) throw error;
 
         document.getElementById("add-item-form").reset();
-        loadAdminMenu(); // Презареждаме таблицата веднага
+        loadAdminMenu();
     } catch (error) {
-        alert("Грешка при добавяне: Уверете се, че сте логнати или проверете правилата за сигурност.");
+        alert("Грешка при добавяне: Проверете конзолата за подробности.");
         console.error(error);
     }
 }
