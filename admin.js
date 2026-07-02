@@ -1,314 +1,174 @@
-// Функция за извличане на потребителите от базата данни
-function getUsers() {
-    const localUsers = localStorage.getItem("systemUsers");
-    if (!localUsers) {
-        // Ако няма нито един потребител, създаваме главния администратор по подразбиране
-        const defaultUsers = [{ username: "admin", password: "admin1234", isRoot: true }];
-        localStorage.setItem("systemUsers", JSON.stringify(defaultUsers));
-        return defaultUsers;
-    }
-    return JSON.parse(localUsers);
-}
+// КОНФИГУРАЦИЯ НА SUPABASE (Същата като в app.js)
+const SUPABASE_URL = "https://rhqirgmxfaeqsihuvqym.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJocWlyZ214ZmFlcXNpaHV2cXltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5OTUwOTQsImV4cCI6MjA5ODU3MTA5NH0.ua9LKCdXgTP9cp48t_DGmHyixBqk4F0dJf424B20vec";
 
-document.addEventListener("DOMContentLoaded", () => {
-    // Проверяваме за активна сесия
-    if (sessionStorage.getItem("adminLoggedIn") === "true") {
-        showAdminPanel();
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+document.addEventListener("DOMContentLoaded", async () => {
+    // Проверяваме дали има вече логнат сесиен потребител
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    
+    if (session) {
+        showDashboard();
     } else {
-        initLoginScreen();
+        showLogin();
     }
+
+    // Слушатели за събития (Events)
+    document.getElementById("login-btn").addEventListener("click", handleLogin);
+    document.getElementById("logout-btn").addEventListener("click", handleLogout);
+    document.getElementById("add-item-form").addEventListener("submit", handleAddItem);
 });
 
-// Логика за екрана за вход
-function initLoginScreen() {
-    document.getElementById("login-form").addEventListener("submit", (e) => {
-        e.preventDefault();
-        const inputUser = document.getElementById("admin-username").value.trim().toLowerCase();
-        const inputPass = document.getElementById("admin-password").value;
-        const errorMsg = document.getElementById("login-error");
+// ФУНКЦИЯ ЗА ВХОД (AUTH LOGIN)
+async function handleLogin() {
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value.trim();
+    const errorEl = document.getElementById("login-error");
 
-        const users = getUsers();
-        // Търсим дали съвпада комбинацията от потребител и парола
-        const foundUser = users.find(u => u.username === inputUser && u.password === inputPass);
-
-        if (foundUser) {
-            sessionStorage.setItem("adminLoggedIn", "true");
-            sessionStorage.setItem("currentAdminUser", foundUser.username);
-            errorMsg.classList.add("hidden");
-            showAdminPanel();
-        } else {
-            errorMsg.classList.remove("hidden");
-            document.getElementById("admin-password").value = "";
-        }
-    });
-}
-
-// Превключване на изгледа и зареждане на данните
-function showAdminPanel() {
-    document.body.className = "bg-gray-100 text-gray-900 font-sans p-4";
-    document.getElementById("login-screen").classList.add("hidden");
-    document.getElementById("admin-content").classList.remove("hidden");
-    
-    // Изписваме името на текущия влязъл потребител
-    const currentUser = sessionStorage.getItem("currentAdminUser") || "персонал";
-    document.getElementById("current-user-display").innerText = currentUser;
-    
-    const savedName = localStorage.getItem("restaurantName") || "Моето заведение";
-    document.getElementById("restaurant-name-input").value = savedName;
-    
-    renderAdminMenu();
-    renderUsersList();
-}
-
-// Изход от системата
-function logoutAdmin() {
-    sessionStorage.removeItem("adminLoggedIn");
-    sessionStorage.removeItem("currentAdminUser");
-    window.location.reload();
-}
-
-// НОВА ФУНКЦИЯ: Добавяне на нов потребител в списъка
-function createNewUser(e) {
-    e.preventDefault();
-    const nameInput = document.getElementById("new-username").value.trim().toLowerCase();
-    const passInput = document.getElementById("new-password").value.trim();
-    
-    if(!nameInput || !passInput) return;
-    
-    let users = getUsers();
-    
-    // Проверка за дублиране на потребителското име
-    if (users.some(u => u.username === nameInput)) {
-        alert("Това потребителско име вече е заето!");
+    if (!email || !password) {
+        errorEl.innerText = "Моля, попълнете всички полета.";
+        errorEl.classList.remove("hidden");
         return;
     }
-    
-    users.push({ username: nameInput, password: passInput, isRoot: false });
-    localStorage.setItem("systemUsers", JSON.stringify(users));
-    
-    document.getElementById("add-user-form").reset();
-    renderUsersList();
-    alert(`Потребителят ${nameInput} е добавен успешно!`);
-}
 
-// НОВА ФУНКЦИЯ: Извеждане на списъка с потребители и бутон за триене
-function renderUsersList() {
-    const users = getUsers();
-    const container = document.getElementById("users-list");
-    
-    container.innerHTML = users.map(u => `
-        <div class="flex justify-between items-center bg-gray-100 p-2 rounded border border-gray-200">
-            <span class="font-medium text-gray-700">👤 ${u.username} ${u.isRoot ? '<span class="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded ml-1">Главен</span>' : ''}</span>
-            <div class="flex items-center gap-3">
-                <span class="text-gray-400 font-mono text-[11px]">парола: ${u.password}</span>
-                ${!u.isRoot ? `<button onclick="deleteUser('${u.username}')" class="text-red-500 hover:text-red-700 font-bold ml-2">✕</button>` : ''}
-            </div>
-        </div>
-    `).join("");
-}
+    try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
 
-// НОВА ФУНКЦИЯ: Премахване на потребител
-function deleteUser(username) {
-    if (confirm(`Сигурни ли сте, че искате да изтриете профила на "${username}"?`)) {
-        let users = getUsers();
-        users = users.filter(u => u.username !== username);
-        localStorage.setItem("systemUsers", JSON.stringify(users));
-        renderUsersList();
+        if (error) throw error;
+
+        showDashboard();
+    } {
+        errorEl.innerText = "Грешен имейл или парола!";
+        errorEl.classList.remove("hidden");
+        console.error(error);
     }
 }
 
-// --- ОТТУК НАДОЛУ ОСТАВА ОРИГИНАЛНИЯТ КОД ЗА УПРАВЛЕНИЕ НА АРТИКУЛИТЕ ---
-function getMenu() {
-    const localData = localStorage.getItem("restaurantMenu");
-    return localData ? JSON.parse(localData) : [];
+// ИЗХОД ОТ СИСТЕМАТА
+async function handleLogout() {
+    await supabaseClient.auth.signOut();
+    showLogin();
 }
 
-function saveMenu(menu) {
-    localStorage.setItem("restaurantMenu", JSON.stringify(menu));
-    renderAdminMenu();
+// ПРЕВКЛЮЧВАНЕ НА ИНТЕРФЕЙСИТЕ
+function showDashboard() {
+    document.getElementById("login-card").classList.add("hidden");
+    document.getElementById("admin-dashboard").classList.remove("hidden");
+    document.getElementById("logout-btn").classList.remove("hidden");
+    loadAdminMenu();
 }
 
-function saveRestaurantName() {
-    localStorage.setItem("restaurantName", document.getElementById("restaurant-name-input").value);
-    alert("Името е запазено!");
+function showLogin() {
+    document.getElementById("login-card").classList.remove("hidden");
+    document.getElementById("admin-dashboard").classList.add("hidden");
+    document.getElementById("logout-btn").classList.add("hidden");
+    document.getElementById("login-password").value = "";
 }
 
-function generateBuiltInTemplate(type) {
-    let sampleData = [];
-    if (type === 'cafe') {
-        localStorage.setItem("restaurantName", "Арома Кафе & Бар");
-        document.getElementById("restaurant-name-input").value = "Арома Кафе & Бар";
-        sampleData = [
-            { id: 101, name: "Еспресо Класик", category: "Топли напитки", price: 1.80, description: "Силно и ароматно късо кафе.", image: "https://images.unsplash.com/photo-1510972527409-cac236c514f5?w=200", available: true },
-            { id: 102, name: "Капучино", category: "Топли напитки", price: 2.50, description: "С гъста млечна пяна и щипка канела.", image: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=200", available: true },
-            { id: 103, name: "Домашна Лимонада", category: "Напитки", price: 3.20, description: "С пресен лимонов сок, мента и мед.", image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=200", available: true },
-            { id: 104, name: "Шоколадов Брауни", category: "Десерти", price: 3.80, description: "Топъл десерт с топка ванилов сладолед.", image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=200", available: true }
-        ];
-    } else if (type === 'restaurant') {
-        localStorage.setItem("restaurantName", "Ресторант 'Балкани'");
-        document.getElementById("restaurant-name-input").value = "Ресторант 'Балкани'";
-        sampleData = [
-            { id: 201, name: "Билков Чай", category: "Топли напитки", price: 1.90, description: "Микс от планински билки с лимон.", image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=200", available: true },
-            { id: 202, name: "Шопска Салата", category: "Салати", price: 4.80, description: "Домати, краставици, пресен пипер, лук и родно сирене.", image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200", available: true },
-            { id: 203, name: "Пилешка Пържола", category: "Основни", price: 8.50, description: "Крехко пилешко филе на грил с гарнитура картофки.", image: "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=200", available: true }
-        ];
-    }
-    const currentMenu = getMenu();
-    saveMenu([...currentMenu, ...sampleData]);
-    alert("Шаблонът е генериран успешно!");
-}
+// ЗАРЕЖДАНЕ НА ТАБЛИЦАТА С АРТИКУЛИ
+async function loadAdminMenu() {
+    const tableBody = document.getElementById("admin-items-table");
+    
+    try {
+        let { data: items, error } = await supabaseClient
+            .from('menu_items')
+            .select('*')
+            .order('category', { ascending: true });
 
-function clearAllMenu() {
-    if (confirm("Сигурни ли сте, че искате да изтриете абсолютно всички артикули?")) { saveMenu([]); cancelEditing(); }
-}
+        if (error) throw error;
 
-function importFile() {
-    const fileInput = document.getElementById("file-import");
-    const file = fileInput.files[0];
-    if (!file) { alert("Моля, първо изберете файл!"); return; }
-    const reader = new FileReader();
-    const fileType = file.name.split('.').pop().toLowerCase();
-    reader.onload = function(e) {
-        const data = e.target.result;
-        let importedData = [];
-        try {
-            if (fileType === 'csv') {
-                const text = new TextDecoder("utf-8").decode(data);
-                importedData = parseCSV(text);
-            } else {
-                const workbook = XLSX.read(data, { type: 'binary' });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                importedData = XLSX.utils.sheet_to_json(worksheet);
-            }
-            processAndSaveImportedMenu(importedData);
-        } catch (error) { console.error(error); alert("Грешка при четене на файла!"); }
-    };
-    if (fileType === 'csv') { reader.readAsArrayBuffer(file); } else { reader.readAsBinaryString(file); }
-}
-
-function parseCSV(text) {
-    const lines = text.split("\n");
-    const headers = lines[0].split(",").map(h => h.trim());
-    const result = [];
-    for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
-        const currentLine = lines[i].split(",");
-        const obj = {};
-        headers.forEach((header, index) => { obj[header] = currentLine[index] ? currentLine[index].trim() : ""; });
-        result.push(obj);
-    }
-    return result;
-}
-
-function processAndSaveImportedMenu(data) {
-    if (data.length === 0) { alert("Файлът е празен!"); return; }
-    const currentMenu = getMenu();
-    data.forEach((row, index) => {
-        const name = row["Име"] || row["name"] || row["Name"];
-        const category = row["Категория"] || row["category"] || row["Category"] || "Други";
-        const price = parseFloat(row["Цена"] || row["price"] || row["Price"] || 0);
-        const description = row["Описание"] || row["description"] || row["Description"] || "";
-        const image = row["Снимка"] || row["image"] || row["Image"] || "https://via.placeholder.com/150";
-        if (name) {
-            currentMenu.push({ id: Date.now() + index, name: name, category: category, price: price, description: description, image: image, available: true });
+        document.getElementById("items-count").innerText = `${items.length} позиции`;
+        
+        if (items.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">Няма добавени артикули.</td></tr>`;
+            return;
         }
-    });
-    saveMenu(currentMenu);
-    alert(`Успешно импортирахте нови артикули!`);
-    document.getElementById("file-import").value = ""; 
-}
 
-function downloadTemplate() {
-    const csvContent = "\ufeffИме,Категория,Цена,Описание,Снимка\nШопска Салата,Салати,4.50,Класическа рецепта,\nЕспресо,Топли напитки,1.80,Ароматно и късо,";
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "shablon_menu.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
+        let html = "";
+        items.forEach(item => {
+            html += `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3 font-bold text-slate-800">${item.name}</td>
+                    <td class="p-3 text-gray-500 text-xs">${item.category}</td>
+                    <td class="p-3 font-semibold text-amber-600">€${Number(item.price).toFixed(2)}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="toggleAvailability('${item.id}', ${item.available})" class="cursor-pointer inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${item.available !== false ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}">
+                            <span class="w-2 h-2 rounded-full ${item.available !== false ? 'bg-green-500' : 'bg-red-500'}"></span>
+                            ${item.available !== false ? 'Налично' : 'Свършило'}
+                        </button>
+                    </td>
+                    <td class="p-3 text-right">
+                        <button onclick="deleteItem('${item.id}')" class="text-xs font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded-lg border border-red-100 hover:bg-red-50 transition cursor-pointer">
+                            🗑️ Изтрий
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        tableBody.innerHTML = html;
 
-function renderAdminMenu() {
-    const menu = getMenu();
-    const container = document.getElementById("admin-menu-list");
-    container.innerHTML = menu.map(item => `
-        <div class="py-4 flex justify-between items-center ${!item.available ? 'bg-gray-50 opacity-70' : ''}">
-            <div>
-                <h3 class="font-bold text-gray-800">${item.name} <span class="text-xs text-gray-400">(${item.category})</span></h3>
-                <p class="text-sm text-amber-600 font-semibold">&euro;${Number(item.price).toFixed(2)}</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <button onclick="toggleAvailability(${item.id})" class="px-2.5 py-1 rounded text-xs font-semibold transition ${item.available ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}">
-                    ${item.available ? 'Налично' : 'Изчерпано'}
-                </button>
-                <button onclick="editItem(${item.id})" class="bg-amber-50 text-amber-700 hover:bg-amber-100 px-2.5 py-1 rounded text-xs font-semibold transition">
-                    Редактирай
-                </button>
-                <button onclick="deleteItem(${item.id})" class="bg-gray-100 text-gray-500 hover:text-red-600 p-1.5 rounded text-xs">Изтрий</button>
-            </div>
-        </div>
-    `).join("");
-}
-
-document.getElementById("add-dish-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const menu = getMenu();
-    const editId = document.getElementById("edit-item-id").value;
-    const dishData = {
-        name: document.getElementById("dish-name").value,
-        category: document.getElementById("dish-category").value,
-        price: parseFloat(document.getElementById("dish-price").value),
-        image: document.getElementById("dish-image").value,
-        description: document.getElementById("dish-desc").value
-    };
-    if (editId) {
-        const updatedMenu = menu.map(item => item.id == editId ? { ...item, ...dishData } : item);
-        saveMenu(updatedMenu);
-        cancelEditing();
-    } else {
-        menu.push({ id: Date.now(), ...dishData, available: true });
-        saveMenu(menu);
-        e.target.reset();
+    } catch (error) {
+        console.error("Грешка при зареждане на мениджъра:", error);
     }
-});
-
-function editItem(id) {
-    const menu = getMenu();
-    const item = menu.find(i => i.id === id);
-    if (!item) return;
-    document.getElementById("edit-item-id").value = item.id;
-    document.getElementById("dish-name").value = item.name;
-    document.getElementById("dish-category").value = item.category;
-    document.getElementById("dish-price").value = item.price;
-    document.getElementById("dish-image").value = item.image;
-    document.getElementById("dish-desc").value = item.description;
-    document.getElementById("form-title").innerText = "Редактирай артикул";
-    document.getElementById("submit-btn").innerText = "Запази промените";
-    document.getElementById("cancel-edit-btn").classList.remove("hidden");
-    document.getElementById("add-dish-form").scrollIntoView({ behavior: 'smooth' });
 }
 
-function cancelEditing() {
-    document.getElementById("edit-item-id").value = "";
-    document.getElementById("add-dish-form").reset();
-    document.getElementById("dish-image").value = "https://via.placeholder.com/150";
-    document.getElementById("form-title").innerText = "Добави артикул ръчно";
-    document.getElementById("submit-btn").innerText = "Добави в менюто";
-    document.getElementById("cancel-edit-btn").classList.add("hidden");
+// ДОБАВЯНЕ НА НОВО ЯСТИЕ / НАПИТКА
+async function handleAddItem(e) {
+    e.preventDefault();
+
+    const name = document.getElementById("item-name").value.trim();
+    const category = document.getElementById("item-category").value.trim();
+    const price = parseFloat(document.getElementById("item-price").value);
+    const description = document.getElementById("item-desc").value.trim();
+    const image = document.getElementById("item-image").value.trim();
+
+    try {
+        const { error } = await supabaseClient
+            .from('menu_items')
+            .insert([{ name, category, price, description, image, available: true }]);
+
+        if (error) throw error;
+
+        document.getElementById("add-item-form").reset();
+        loadAdminMenu(); // Презареждаме таблицата веднага
+    } catch (error) {
+        alert("Грешка при добавяне: Уверете се, че сте логнати или проверете правилата за сигурност.");
+        console.error(error);
+    }
 }
 
-function toggleAvailability(id) {
-    let menu = getMenu();
-    menu = menu.map(item => item.id === id ? { ...item, available: !item.available } : item);
-    saveMenu(menu);
+// ВКЛЮЧВАНЕ / ИЗКЛЮЧВАНЕ НА НАЛИЧНОСТ БЪРЗО ОТ ТАБЛИЦАТА
+async function toggleAvailability(id, currentStatus) {
+    try {
+        const { error } = await supabaseClient
+            .from('menu_items')
+            .update({ available: !currentStatus })
+            .eq('id', id);
+
+        if (error) throw error;
+        loadAdminMenu();
+    } catch (error) {
+        console.error(error);
+    }
 }
 
-function deleteItem(id) {
-    if (confirm("Изтриване?")) {
-        saveMenu(getMenu().filter(item => item.id !== id));
-        if (document.getElementById("edit-item-id").value == id) { cancelEditing(); }
+// ИЗТРИВАНЕ НА АРТИКУЛ
+async function deleteItem(id) {
+    if (!confirm("Сигурни ли сте, че искате да изтриете този артикул от менюто?")) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from('menu_items')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        loadAdminMenu();
+    } catch (error) {
+        console.error(error);
     }
 }
