@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("add-item-form").addEventListener("submit", handleFormSubmit);
     document.getElementById("save-res-name-btn").addEventListener("click", saveRestaurantName);
     
-    // Закачаме кликовете на таблицата динамично, за да не се чупи в браузъра
+    // Закачаме кликовете на таблицата динамично
     document.getElementById("admin-items-table").addEventListener("click", handleTableClicks);
 });
 
@@ -73,7 +73,6 @@ function showDashboard() {
 }
 
 function showLogin() {
-    document.getElementById("login-card").cursor = "default";
     document.getElementById("login-card").classList.remove("hidden");
     document.getElementById("admin-dashboard").classList.add("hidden");
     document.getElementById("logout-btn").classList.add("hidden");
@@ -101,22 +100,25 @@ async function loadAdminMenu() {
 
         let html = "";
         items.forEach(item => {
+            // Подсигуряваме се дали ID-то е с малки или главни букви в базата данни
+            const itemId = item.id || item.ID || item.item_id;
+
             html += `
                 <tr class="hover:bg-slate-50 transition">
                     <td class="p-3 font-bold text-slate-800">${item.name}</td>
                     <td class="p-3 text-gray-500 text-xs">${item.category}</td>
                     <td class="p-3 font-semibold text-amber-600">€${Number(item.price).toFixed(2)}</td>
                     <td class="p-3 text-center">
-                        <button data-action="toggle" data-id="${item.id}" data-status="${item.available}" class="cursor-pointer inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${item.available !== false ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}">
+                        <button data-action="toggle" data-id="${itemId}" data-status="${item.available}" class="cursor-pointer inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${item.available !== false ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}">
                             <span class="w-2 h-2 rounded-full ${item.available !== false ? 'bg-green-500' : 'bg-red-500'}"></span>
                             ${item.available !== false ? 'Налично' : 'Свършило'}
                         </button>
                     </td>
                     <td class="p-3 text-right space-x-1">
-                        <button data-action="edit" data-id="${item.id}" class="text-xs font-bold text-amber-600 hover:text-amber-700 px-2 py-1 rounded-lg border border-amber-100 hover:bg-amber-50 transition cursor-pointer">
+                        <button data-action="edit" data-id="${itemId}" class="text-xs font-bold text-amber-600 hover:text-amber-700 px-2 py-1 rounded-lg border border-amber-100 hover:bg-amber-50 transition cursor-pointer">
                             ✏️ Редактирай
                         </button>
-                        <button data-action="delete" data-id="${item.id}" class="text-xs font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded-lg border border-red-100 hover:bg-red-50 transition cursor-pointer">
+                        <button data-action="delete" data-id="${itemId}" class="text-xs font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded-lg border border-red-100 hover:bg-red-50 transition cursor-pointer">
                             🗑️ Изтрий
                         </button>
                     </td>
@@ -131,7 +133,7 @@ async function loadAdminMenu() {
     }
 }
 
-// Нова централизирана функция, която хваща всички кликове в таблицата
+// Централизирана функция за хващане на кликовете в таблицата
 function handleTableClicks(e) {
     const button = e.target.closest("button");
     if (!button) return;
@@ -150,14 +152,18 @@ function handleTableClicks(e) {
 }
 
 function startEditItem(id) {
-    const item = localItemsArray.find(i => i.id === id);
+    // Търсим артикула, като проверяваме всички възможни варианти за име на колоната
+    const item = localItemsArray.find(i => String(i.id) === String(id) || String(i.ID) === String(id) || String(i.item_id) === String(id));
+    
     if (!item) {
-        alert("Артикулът не беше намерен локално!");
+        alert("Артикулът не беше намерен локално! Подадено ID: " + id);
         return;
     }
 
-    // Попълваме полетата
-    document.getElementById("item-id").value = item.id;
+    const actualId = item.id || item.ID || item.item_id;
+
+    // Попълваме полетата във формата
+    document.getElementById("item-id").value = actualId;
     document.getElementById("item-name").value = item.name;
     document.getElementById("item-category").value = item.category;
     document.getElementById("item-price").value = item.price;
@@ -183,11 +189,17 @@ async function handleFormSubmit(e) {
     const image = document.getElementById("item-image").value.trim();
 
     try {
+        // Подсигуряваме се кое точно име на колоната ползва таблицата ни
+        const itemForColumnCheck = localItemsArray[0] || {};
+        let idColumnName = "id";
+        if (itemForColumnCheck.ID !== undefined) idColumnName = "ID";
+        else if (itemForColumnCheck.item_id !== undefined) idColumnName = "item_id";
+
         if (id) {
             const { error } = await supabaseClient
                 .from('menu_items')
                 .update({ name, category, price, description, image })
-                .eq('id', id);
+                .eq(idColumnName, id);
 
             if (error) throw error;
             alert("Артикулът е редактиран успешно!");
@@ -210,10 +222,15 @@ async function handleFormSubmit(e) {
 
 async function toggleAvailability(id, currentStatus) {
     try {
+        const itemForColumnCheck = localItemsArray[0] || {};
+        let idColumnName = "id";
+        if (itemForColumnCheck.ID !== undefined) idColumnName = "ID";
+        else if (itemForColumnCheck.item_id !== undefined) idColumnName = "item_id";
+
         const { error } = await supabaseClient
             .from('menu_items')
             .update({ available: !currentStatus })
-            .eq('id', id);
+            .eq(idColumnName, id);
 
         if (error) throw error;
         loadAdminMenu();
@@ -226,10 +243,15 @@ async function deleteItem(id) {
     if (!confirm("Сигурни ли сте, че искате да изтриете този артикул?")) return;
 
     try {
+        const itemForColumnCheck = localItemsArray[0] || {};
+        let idColumnName = "id";
+        if (itemForColumnCheck.ID !== undefined) idColumnName = "ID";
+        else if (itemForColumnCheck.item_id !== undefined) idColumnName = "item_id";
+
         const { error } = await supabaseClient
             .from('menu_items')
             .delete()
-            .eq('id', id);
+            .eq(idColumnName, id);
 
         if (error) throw error;
         loadAdminMenu();
