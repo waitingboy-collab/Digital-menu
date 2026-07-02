@@ -100,7 +100,6 @@ async function loadAdminMenu() {
 
         let html = "";
         items.forEach(item => {
-            // Подсигуряваме се дали ID-то е с малки или главни букви в базата данни
             const itemId = item.id || item.ID || item.item_id;
 
             html += `
@@ -109,7 +108,7 @@ async function loadAdminMenu() {
                     <td class="p-3 text-gray-500 text-xs">${item.category}</td>
                     <td class="p-3 font-semibold text-amber-600">€${Number(item.price).toFixed(2)}</td>
                     <td class="p-3 text-center">
-                        <button data-action="toggle" data-id="${itemId}" data-status="${item.available}" class="cursor-pointer inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${item.available !== false ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}">
+                        <button data-action="toggle" data-id="${itemId}" class="cursor-pointer inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${item.available !== false ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}">
                             <span class="w-2 h-2 rounded-full ${item.available !== false ? 'bg-green-500' : 'bg-red-500'}"></span>
                             ${item.available !== false ? 'Налично' : 'Свършило'}
                         </button>
@@ -133,7 +132,6 @@ async function loadAdminMenu() {
     }
 }
 
-// Централизирана функция за хващане на кликовете в таблицата
 function handleTableClicks(e) {
     const button = e.target.closest("button");
     if (!button) return;
@@ -144,15 +142,13 @@ function handleTableClicks(e) {
     if (action === "edit") {
         startEditItem(id);
     } else if (action === "toggle") {
-        const currentStatus = button.dataset.status === "true";
-        toggleAvailability(id, currentStatus);
+        toggleAvailability(id);
     } else if (action === "delete") {
         deleteItem(id);
     }
 }
 
 function startEditItem(id) {
-    // Търсим артикула, като проверяваме всички възможни варианти за име на колоната
     const item = localItemsArray.find(i => String(i.id) === String(id) || String(i.ID) === String(id) || String(i.item_id) === String(id));
     
     if (!item) {
@@ -162,7 +158,6 @@ function startEditItem(id) {
 
     const actualId = item.id || item.ID || item.item_id;
 
-    // Попълваме полетата във формата
     document.getElementById("item-id").value = actualId;
     document.getElementById("item-name").value = item.name;
     document.getElementById("item-category").value = item.category;
@@ -170,11 +165,9 @@ function startEditItem(id) {
     document.getElementById("item-desc").value = item.description || "";
     document.getElementById("item-image").value = item.image || "";
 
-    // Сменяме текстовете и бутоните
     document.getElementById("form-title").innerText = "✏️ Редактиране на артикул";
     document.getElementById("submit-form-btn").innerText = "💾 Запази промените";
     
-    // Скролваме нагоре
     document.getElementById("form-title").scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -189,7 +182,6 @@ async function handleFormSubmit(e) {
     const image = document.getElementById("item-image").value.trim();
 
     try {
-        // Подсигуряваме се кое точно име на колоната ползва таблицата ни
         const itemForColumnCheck = localItemsArray[0] || {};
         let idColumnName = "id";
         if (itemForColumnCheck.ID !== undefined) idColumnName = "ID";
@@ -220,20 +212,28 @@ async function handleFormSubmit(e) {
     }
 }
 
-async function toggleAvailability(id, currentStatus) {
+// Изцяло коригирана функция за наличност
+async function toggleAvailability(id) {
     try {
         const itemForColumnCheck = localItemsArray[0] || {};
         let idColumnName = "id";
         if (itemForColumnCheck.ID !== undefined) idColumnName = "ID";
         else if (itemForColumnCheck.item_id !== undefined) idColumnName = "item_id";
 
+        // Търсим артикула в локалния списък, за да разберем истинския му статус
+        const item = localItemsArray.find(i => String(i.id) === String(id) || String(i.ID) === String(id) || String(i.item_id) === String(id));
+        if (!item) return;
+
+        // Обръщаме статуса на противоположния
+        const newStatus = !item.available;
+
         const { error } = await supabaseClient
             .from('menu_items')
-            .update({ available: !currentStatus })
+            .update({ available: newStatus })
             .eq(idColumnName, id);
 
         if (error) throw error;
-        loadAdminMenu();
+        loadAdminMenu(); // Презареждаме таблицата
     } catch (error) {
         alert("Грешка при промяна на наличността: " + error.message);
     }
