@@ -1,3 +1,10 @@
+// КОНФИГУРАЦИЯ НА SUPABASE
+const SUPABASE_URL = "https://rhqirgmxfaeqsihuvqym.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJocWlyZ214ZmFlcXNpaHV2cXltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5OTUwOTQsImV4cCI6MjA5ODU3MTA5NH0.ua9LKCdXgTP9cp48t_DGmHyixBqk4F0dJf424B20vec";
+
+// Инициализация на клиента
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 // Проверяваме езика на телефона на клиента при отваряне
 let currentLang = navigator.language.startsWith('en') ? 'EN' : 'BG';
 
@@ -9,22 +16,43 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => {
             triggerGoogleTranslate('en');
             document.getElementById("lang-text").innerText = "BG";
-        }, 1200); // Изчакване за сигурно зареждане на библиотеката на Google
+        }, 1200);
     }
 });
 
-function initMenu() {
-    const savedName = localStorage.getItem("restaurantName") || "Ресторант 'Балкани'";
-    document.getElementById("restaurant-title").innerText = savedName;
+// АСИНХРОННО ИЗВЛИЧАНЕ НА ДАННИТЕ ОТ SUPABASE
+async function initMenu() {
+    const container = document.getElementById("menu-container");
+    
+    // Задаваме статично име или може да го смениш по твой избор
+    document.getElementById("restaurant-title").innerText = "Ресторант 'Балкани'";
 
-    const localData = localStorage.getItem("restaurantMenu");
-    const menuItems = localData ? JSON.parse(localData) : [];
+    try {
+        // Дърпаме всички редове от таблицата 'menu_items'
+        let { data: menuItems, error } = await supabase
+            .from('menu_items')
+            .select('*');
 
-    const availableItems = menuItems.filter(item => item.available !== false);
-    const categories = [...new Set(availableItems.map(item => item.category))];
+        if (error) throw error;
 
-    renderCategoriesNav(categories);
-    renderMenuContent(availableItems, categories);
+        // Филтрираме само наличните ястия
+        const availableItems = menuItems.filter(item => item.available !== false);
+        
+        if (availableItems.length === 0) {
+            container.innerHTML = `<div class="text-center py-12 text-gray-400 text-sm">📢 Менюто е празно...</div>`;
+            return;
+        }
+
+        // Извличане на уникалните категории
+        const categories = [...new Set(availableItems.map(item => item.category))];
+
+        renderCategoriesNav(categories);
+        renderMenuContent(availableItems, categories);
+
+    } catch (error) {
+        console.error("Грешка при връзка със Supabase:", error);
+        container.innerHTML = `<div class="text-center py-12 text-red-500 text-sm">📢 Грешка при зареждане на менюто. Моля, опитайте отново.</div>`;
+    }
 }
 
 function renderCategoriesNav(categories) {
@@ -42,12 +70,8 @@ function renderCategoriesNav(categories) {
 
 function renderMenuContent(items, categories) {
     const container = document.getElementById("menu-container");
-    if (items.length === 0) {
-        container.innerHTML = `<div class="text-center py-12 text-gray-400 text-sm">📢 Менюто е празно...</div>`;
-        return;
-    }
-
     let html = "";
+
     categories.forEach(category => {
         const categoryItems = items.filter(item => item.category === category);
         html += `
@@ -81,13 +105,11 @@ function renderMenuContent(items, categories) {
     container.innerHTML = html;
 }
 
-// МОДЕРНИЗИРАН НАЧИН ЗА ПРИНУДИТЕЛНО СТАРТИРАНЕ НА ПРЕВОДА НА GOOGLE
+// ПРИНУДИТЕЛНО СТАРТИРАНЕ НА ПРЕВОДА НА GOOGLE
 function triggerGoogleTranslate(langCode) {
     const selectEl = document.querySelector('.goog-te-combo');
     if (selectEl) {
         selectEl.value = langCode;
-        
-        // Създаваме native браузърно събитие, за да излъжем защитите на скрипта
         if (document.createEvent) {
             const event = document.createEvent('HTMLEvents');
             event.initEvent('change', true, true);
@@ -100,7 +122,7 @@ function triggerGoogleTranslate(langCode) {
     }
 }
 
-// РЪЧНО КЛИКАНЕ НА НАШИЯ БУТОН СИ СМЕНЯ ТЕКСТА
+// РЪЧНО СМЕНЯНЕ НА ЕЗИКА ОТ БУТОНА
 function toggleGoogleLanguage() {
     const langText = document.getElementById("lang-text");
     if (currentLang === 'BG') {
@@ -119,6 +141,7 @@ function scrollToCategory(categoryName) {
         btn.classList.remove("bg-amber-600", "text-white", "font-bold");
         btn.classList.add("bg-gray-100", "text-gray-600", "font-semibold");
     });
+    
     const clickedBtn = event.currentTarget;
     clickedBtn.classList.remove("bg-gray-100", "text-gray-600", "font-semibold");
     clickedBtn.classList.add("bg-amber-600", "text-white", "font-bold");
