@@ -29,7 +29,7 @@ function saveRestaurantName() {
     const nameInput = document.getElementById("restaurant-name-input").value.trim();
     if(nameInput) {
         localStorage.setItem("customRestaurantName", nameInput);
-        alert("Името на заведениято е записано успешно!");
+        alert("Името на заведението е записано успешно!");
     }
 }
 
@@ -103,16 +103,16 @@ async function loadAdminMenu() {
                     <td class="p-3 text-gray-500 text-xs">${item.category}</td>
                     <td class="p-3 font-semibold text-amber-600">€${Number(item.price).toFixed(2)}</td>
                     <td class="p-3 text-center">
-                        <button onclick="toggleAvailability('${item.id}', ${item.available})" class="cursor-pointer inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${item.available !== false ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}">
+                        <button onclick="window.toggleAvailability('${item.id}', ${item.available})" class="cursor-pointer inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${item.available !== false ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}">
                             <span class="w-2 h-2 rounded-full ${item.available !== false ? 'bg-green-500' : 'bg-red-500'}"></span>
                             ${item.available !== false ? 'Налично' : 'Свършило'}
                         </button>
                     </td>
                     <td class="p-3 text-right space-x-1">
-                        <button onclick="startEditItem('${item.id}')" class="text-xs font-bold text-amber-600 hover:text-amber-700 px-2 py-1 rounded-lg border border-amber-100 hover:bg-amber-50 transition cursor-pointer">
+                        <button onclick="window.startEditItem('${item.id}')" class="text-xs font-bold text-amber-600 hover:text-amber-700 px-2 py-1 rounded-lg border border-amber-100 hover:bg-amber-50 transition cursor-pointer">
                             ✏️ Редактирай
                         </button>
-                        <button onclick="deleteItem('${item.id}')" class="text-xs font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded-lg border border-red-100 hover:bg-red-50 transition cursor-pointer">
+                        <button onclick="window.deleteItem('${item.id}')" class="text-xs font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded-lg border border-red-100 hover:bg-red-50 transition cursor-pointer">
                             🗑️ Изтрий
                         </button>
                     </td>
@@ -162,7 +162,8 @@ async function handleFormSubmit(e) {
     }
 }
 
-function startEditItem(id) {
+// ГЛОБАЛНА ФУНКЦИЯ ЗА РЕДАКТИРАНЕ
+window.startEditItem = function(id) {
     const item = localItemsArray.find(i => i.id === id);
     if (!item) return;
 
@@ -179,18 +180,10 @@ function startEditItem(id) {
     document.getElementById("submit-form-btn").classList.replace("hover:bg-green-700", "hover:bg-amber-700");
     
     document.getElementById("form-title").scrollIntoView({ behavior: 'smooth' });
-}
+};
 
-function resetForm() {
-    document.getElementById("add-item-form").reset();
-    document.getElementById("item-id").value = "";
-    document.getElementById("form-title").innerText = "Добавяне на нов артикул";
-    document.getElementById("submit-form-btn").innerText = "➕ Добави към менюто";
-    document.getElementById("submit-form-btn").classList.replace("bg-amber-600", "bg-green-600");
-    document.getElementById("submit-form-btn").classList.replace("hover:bg-amber-700", "hover:bg-green-700");
-}
-
-async function toggleAvailability(id, currentStatus) {
+// ГЛОБАЛНА ФУНКЦИЯ ЗА НАЛИЧНОСТ
+window.toggleAvailability = async function(id, currentStatus) {
     try {
         const { error } = await supabaseClient
             .from('menu_items')
@@ -202,9 +195,10 @@ async function toggleAvailability(id, currentStatus) {
     } catch (error) {
         console.error(error);
     }
-}
+};
 
-async function deleteItem(id) {
+// ГЛОБАЛНА ФУНКЦИЯ ЗА ИЗТРИВАНЕ
+window.deleteItem = async function(id) {
     if (!confirm("Сигурни ли сте, че искате да изтриете този артикул?")) return;
 
     try {
@@ -218,4 +212,13 @@ async function deleteItem(id) {
     } catch (error) {
         console.error(error);
     }
+};
+
+function resetForm() {
+    document.getElementById("add-item-form").reset();
+    document.getElementById("item-id").value = "";
+    document.getElementById("form-title").innerText = "Добавяне на нов артикул";
+    document.getElementById("submit-form-btn").innerText = "➕ Добави към менюто";
+    document.getElementById("submit-form-btn").classList.replace("bg-amber-600", "bg-green-600");
+    document.getElementById("submit-form-btn").classList.replace("hover:bg-amber-700", "hover:bg-green-700");
 }
