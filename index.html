@@ -12,27 +12,13 @@
         html { scroll-behavior: smooth; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* ПЪЛНО СКРИВАНЕ НА БАРИТЕ И ГРЕШКИТЕ НА GOOGLE TRANSLATE */
-        .skiptranslate, .goog-te-banner-frame, #goog-gt-tt, .goog-te-balloon-frame { 
-            display: none !important; 
-        }
-        body { top: 0px !important; }
-        .goog-te-gadget { display: none !important; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 font-sans pb-12">
 
     <!-- ХЕДЪР -->
     <header class="bg-amber-600 text-white text-center py-7 px-4 shadow-sm rounded-b-3xl relative">
-        <!-- БУТОН ЗА ПРЕВОД -->
-        <div class="absolute top-4 right-4 z-20">
-            <button onclick="toggleGoogleLanguage()" id="lang-btn" class="bg-white/20 hover:bg-white/30 backdrop-blur-md text-xs font-black px-3 py-1.5 rounded-full border border-white/30 transition flex items-center gap-1 cursor-pointer tracking-wider">
-                🌐 <span id="lang-text">EN</span>
-            </button>
-        </div>
-
-        <h1 class="text-2xl font-black tracking-wide truncate mt-2 pr-12" id="restaurant-title">Зареждане...</h1>
+        <h1 class="text-2xl font-black tracking-wide truncate mt-2" id="restaurant-title">Зареждане...</h1>
         <p class="text-[11px] opacity-90 mt-1 uppercase tracking-widest font-bold">Дигитално меню</p>
     </header>
 
@@ -45,22 +31,6 @@
     <main class="max-w-md mx-auto px-4 mt-4 space-y-8" id="menu-container">
         <div class="text-center py-12 text-gray-400 text-sm">Зареждане на менюто от облака...</div>
     </main>
-
-    <!-- Важен контейнер за Google Translate (скрит) -->
-    <div id="google_translate_element" style="display:none !important;"></div>
-
-    <!-- Инициализация на Google Translate двигател -->
-    <script type="text/javascript">
-        function googleTranslateElementInit() {
-            new google.translate.TranslateElement({
-                pageLanguage: 'bg',
-                includedLanguages: 'bg,en',
-                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-                autoDisplay: false
-            }, 'google_translate_element');
-        }
-    </script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
     <!-- Основен скрипт -->
     <script src="app.js"></script>
