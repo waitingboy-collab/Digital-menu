@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("add-item-form").addEventListener("submit", handleFormSubmit);
     document.getElementById("save-res-name-btn").addEventListener("click", saveRestaurantName);
     
-    // Закачаме кликовете на таблицата динамично
     document.getElementById("admin-items-table").addEventListener("click", handleTableClicks);
 });
 
@@ -101,6 +100,9 @@ async function loadAdminMenu() {
         let html = "";
         items.forEach(item => {
             const itemId = item.id || item.ID || item.item_id;
+            
+            // Защита: Ако в базата данни стойността е null или липсва, приемаме че е true (налично)
+            const isAvailable = item.available !== false;
 
             html += `
                 <tr class="hover:bg-slate-50 transition">
@@ -108,9 +110,9 @@ async function loadAdminMenu() {
                     <td class="p-3 text-gray-500 text-xs">${item.category}</td>
                     <td class="p-3 font-semibold text-amber-600">€${Number(item.price).toFixed(2)}</td>
                     <td class="p-3 text-center">
-                        <button data-action="toggle" data-id="${itemId}" class="cursor-pointer inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${item.available !== false ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}">
-                            <span class="w-2 h-2 rounded-full ${item.available !== false ? 'bg-green-500' : 'bg-red-500'}"></span>
-                            ${item.available !== false ? 'Налично' : 'Свършило'}
+                        <button data-action="toggle" data-id="${itemId}" class="cursor-pointer inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${isAvailable ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}">
+                            <span class="w-2 h-2 rounded-full ${isAvailable ? 'bg-green-500' : 'bg-red-500'}"></span>
+                            ${isAvailable ? 'Налично' : 'Свършило'}
                         </button>
                     </td>
                     <td class="p-3 text-right space-x-1">
@@ -212,7 +214,6 @@ async function handleFormSubmit(e) {
     }
 }
 
-// Изцяло коригирана функция за наличност
 async function toggleAvailability(id) {
     try {
         const itemForColumnCheck = localItemsArray[0] || {};
@@ -220,12 +221,12 @@ async function toggleAvailability(id) {
         if (itemForColumnCheck.ID !== undefined) idColumnName = "ID";
         else if (itemForColumnCheck.item_id !== undefined) idColumnName = "item_id";
 
-        // Търсим артикула в локалния списък, за да разберем истинския му статус
         const item = localItemsArray.find(i => String(i.id) === String(id) || String(i.ID) === String(id) || String(i.item_id) === String(id));
         if (!item) return;
 
-        // Обръщаме статуса на противоположния
-        const newStatus = !item.available;
+        // Взимаме текущото състояние и го обръщаме
+        const currentStatus = item.available !== false;
+        const newStatus = !currentStatus;
 
         const { error } = await supabaseClient
             .from('menu_items')
@@ -233,9 +234,11 @@ async function toggleAvailability(id) {
             .eq(idColumnName, id);
 
         if (error) throw error;
-        loadAdminMenu(); // Презареждаме таблицата
+        loadAdminMenu();
     } catch (error) {
-        alert("Грешка при промяна на наличността: " + error.message);
+        // Показваме точната причина защо Supabase отказва
+        alert("Грешка от Supabase: " + error.message + "\nДетайли: " + error.details);
+        console.error(error);
     }
 }
 
