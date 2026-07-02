@@ -1,23 +1,13 @@
 // КОНФИГУРАЦИЯ НА SUPABASE
 const SUPABASE_URL = "https://rhqirgmxfaeqsihuvqym.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiSub2hha2VzZSIsInJlZiI6InJocWlyZ214ZmFlcXNpaHV2cXltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5OTUwOTQsImV4cCI6MjA5ODU3MTA5NH0.ua9LKCdXgTP9cp48t_DGmHyixBqk4F0dJf424B20vec";
+// Поставен е правилният Supabase ключ от admin.js
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJocWlyZ214ZmFlcXNpaHV2cXltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5OTUwOTQsImV4cCI6MjA5ODU3MTA5NH0.ua9LKCdXgTP9cp48t_DGmHyixBqk4F0dJf424B20vec";
 
 // Инициализираме клиента с уникално име (supabaseClient), за да няма конфликти
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Проверяваме езика на телефона на клиента при отваряне
-let currentLang = navigator.language.startsWith('en') ? 'EN' : 'BG';
-
 document.addEventListener("DOMContentLoaded", () => {
     initMenu();
-    
-    // Автоматично стартиране на английски, ако езикът на телефона е такъв
-    if (currentLang === 'EN') {
-        setTimeout(() => {
-            triggerGoogleTranslate('en');
-            document.getElementById("lang-text").innerText = "BG";
-        }, 1200);
-    }
 });
 
 // АСИНХРОННО ИЗВЛИЧАНЕ НА ДАННИТЕ ОТ SUPABASE
@@ -86,7 +76,7 @@ function renderMenuContent(items, categories) {
                 <div class="space-y-3">
         `;
         categoryItems.forEach(item => {
-            // Готина дефолтна снимка с високо качество за кафе/храна, ако няма въведена в базата
+            // Дефолтна снимка с високо качество за кафе/храна, ако няма въведена в базата
             const defaultImg = "https://images.unsplash.com/photo-1541167760496-1628856ab772?q=80&w=200&auto=format&fit=crop"; 
             const itemImg = item.image && item.image.trim() !== "" ? item.image : defaultImg;
             
@@ -123,27 +113,5 @@ function scrollToCategory(catId) {
         if (element) {
             element.scrollIntoView({ behavior: 'smooth' });
         }
-    }
-}
-
-// ФУНКЦИЯ ЗА СМЯНА НА ЕЗИКА (GOOGLE TRANSLATE)
-function toggleLanguage() {
-    const btnText = document.getElementById("lang-text");
-    if (currentLang === 'BG') {
-        triggerGoogleTranslate('en');
-        currentLang = 'EN';
-        btnText.innerText = "BG";
-    } else {
-        triggerGoogleTranslate('bg');
-        currentLang = 'BG';
-        btnText.innerText = "EN";
-    }
-}
-
-function triggerGoogleTranslate(langCode) {
-    const select = document.querySelector('.goog-te-combo');
-    if (select) {
-        select.value = langCode;
-        select.dispatchEvent(new Event('change'));
     }
 }
