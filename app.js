@@ -1,6 +1,6 @@
 // КОНФИГУРАЦИЯ НА SUPABASE
 const SUPABASE_URL = "https://rhqirgmxfaeqsihuvqym.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJocWlyZ214ZmFlcXNpaHV2cXltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5OTUwOTQsImV4cCI6MjA5ODU3MTA5NH0.ua9LKCdXgTP9cp48t_DGmHyixBqk4F0dJf424B20vec";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiSub2hha2VzZSIsInJlZiI6InJocWlyZ214ZmFlcXNpaHV2cXltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5OTUwOTQsImV4cCI6MjA5ODU3MTA5NH0.ua9LKCdXgTP9cp48t_DGmHyixBqk4F0dJf424B20vec";
 
 // Инициализираме клиента с уникално име (supabaseClient), за да няма конфликти
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -100,4 +100,50 @@ function renderMenuContent(items, categories) {
                         </div>
                         <p class="text-xs text-gray-500 mt-1 line-clamp-2">${item.description || ''}</p>
                         <div class="mt-2">
-                            <span class="inline-flex items-center gap-1 text-[10px] bg-green-50 text-green-700 font
+                            <span class="inline-flex items-center gap-1 text-[10px] bg-green-50 text-green-700 font-medium px-2 py-0.5 rounded-md">Налично</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += `
+                </div>
+            </section>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+// ФУНКЦИЯ ЗА ПЛАВНО СКРОЛИРАНЕ ДО КАТЕГОРИЯ
+function scrollToCategory(catId) {
+    if (catId === 'all') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        const element = document.getElementById(`sec-${catId}`);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+}
+
+// ФУНКЦИЯ ЗА СМЯНА НА ЕЗИКА (GOOGLE TRANSLATE)
+function toggleLanguage() {
+    const btnText = document.getElementById("lang-text");
+    if (currentLang === 'BG') {
+        triggerGoogleTranslate('en');
+        currentLang = 'EN';
+        btnText.innerText = "BG";
+    } else {
+        triggerGoogleTranslate('bg');
+        currentLang = 'BG';
+        btnText.innerText = "EN";
+    }
+}
+
+function triggerGoogleTranslate(langCode) {
+    const select = document.querySelector('.goog-te-combo');
+    if (select) {
+        select.value = langCode;
+        select.dispatchEvent(new Event('change'));
+    }
+}
