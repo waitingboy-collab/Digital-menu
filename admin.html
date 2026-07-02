@@ -3,143 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход - Контролен панел</title>
+    <title>Админ Панел - Дигитално Меню</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- SDK на Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100 text-gray-900 font-sans p-4 min-h-screen flex items-center justify-center">
+<body class="bg-gray-100 text-gray-950 font-sans min-h-screen flex flex-col">
 
-    <div id="login-screen" class="w-full max-w-md bg-white p-6 rounded-2xl shadow-md transition-all">
-        <div class="text-center mb-6">
-            <span class="text-4xl">🔐</span>
-            <h2 class="text-xl font-bold text-gray-800 mt-2">Вход за персонал</h2>
-            <p class="text-xs text-gray-500">Въведете вашите данни, за да управлявате менюто.</p>
+    <!-- ХЕДЪР -->
+    <header class="bg-slate-800 text-white py-4 px-6 shadow-md flex justify-between items-center">
+        <h1 class="text-lg font-black tracking-wide">⚙️ Меню Мениджър</h1>
+        <button id="logout-btn" class="hidden bg-red-600 hover:bg-red-700 text-xs font-bold px-3 py-1.5 rounded-lg transition cursor-pointer">
+            Изход
+        </button>
+    </header>
+
+    <main class="flex-1 max-w-4xl w-full mx-auto p-4 flex flex-col justify-center">
+        
+        <!-- ФОРМА ЗА ВХОД (LOGIN CARD) -->
+        <div id="login-card" class="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full mx-auto space-y-4">
+            <div class="text-center">
+                <h2 class="text-xl font-extrabold text-slate-800">Вход в системата</h2>
+                <p class="text-xs text-gray-500 mt-1">Въведете вашите админ данни</p>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Имейл</label>
+                    <input type="email" id="login-email" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-slate-500" placeholder="admin@beachbar.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Парола</label>
+                    <input type="password" id="login-password" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-slate-500" placeholder="••••••••">
+                </div>
+                <button id="login-btn" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-sm cursor-pointer">
+                    Влез в таблото
+                </button>
+                <p id="login-error" class="text-xs text-red-600 text-center font-semibold hidden"></p>
+            </div>
         </div>
-        <form id="login-form" class="space-y-4">
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Потребителско име</label>
-                <input type="text" id="admin-username" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-amber-600" placeholder="Въведете име...">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Парола</label>
-                <input type="password" id="admin-password" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-amber-600 tracking-widest" placeholder="••••••••">
-                <p id="login-error" class="text-red-500 text-xs mt-1 hidden">Грешно име или парола! Опитайте отново.</p>
-            </div>
-            <button type="submit" class="w-full bg-amber-600 text-white font-bold py-2.5 rounded-lg hover:bg-amber-700 transition text-sm shadow-sm">Влез в панела</button>
-        </form>
-    </div>
 
-    <div id="admin-content" class="w-full max-w-2xl mx-auto hidden self-start mt-4">
-        <header class="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm">
-            <div>
-                <h1 class="text-xl font-bold text-gray-800">Управление на менюто</h1>
-                <p class="text-[10px] text-green-600 font-medium flex items-center gap-1">
-                    ● Влезли сте като: <span id="current-user-display" class="font-bold uppercase">—</span>
-                </p>
-            </div>
-            <div class="flex items-center gap-3">
-                <button onclick="logoutAdmin()" class="text-xs text-gray-500 hover:text-red-600 font-medium">Изход</button>
-                <a href="index.html" class="text-sm text-amber-600 hover:underline">← Към менюто</a>
-            </div>
-        </header>
-
-        <section class="bg-white p-5 rounded-xl shadow-sm mb-6 border-l-4 border-amber-500">
-            <h2 class="text-lg font-bold mb-1 text-gray-700">Управление на потребители / персонал</h2>
-            <p class="text-xs text-gray-500 mb-4">Добавяйте нови акаунти за управители или служители, които да редактират менюто.</p>
+        <!-- АДМИН ТАБЛО (СКРИТО ПО ПОДРАЗБИРАНЕ) -->
+        <div id="admin-dashboard" class="hidden space-y-6 w-full animate-fade-in">
             
-            <form id="add-user-form" onsubmit="createNewUser(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                <div>
-                    <input type="text" id="new-username" required class="w-full border p-2 rounded-lg text-xs bg-white focus:outline-amber-600" placeholder="Потребителско име">
-                </div>
-                <div>
-                    <input type="password" id="new-password" required class="w-full border p-2 rounded-lg text-xs bg-white focus:outline-amber-600" placeholder="Парола">
-                </div>
-                <div>
-                    <button type="submit" class="w-full bg-amber-600 text-white font-bold py-2 rounded-lg hover:bg-amber-700 transition text-xs">➕ Добави потребител</button>
-                </div>
-            </form>
-
-            <div class="text-xs">
-                <h3 class="font-semibold text-gray-600 mb-2">Активни профили:</h3>
-                <div id="users-list" class="space-y-1.5">
-                    </div>
+            <!-- ФОРМА ЗА ДОБАВЯНЕ НА ЯСТИЕ -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+                <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider mb-4 border-l-3 border-amber-600 pl-2">Добавяне на нов артикул</h3>
+                <form id="add-item-form" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <input type="text" id="item-name" placeholder="Име (напр. Фрапе)" class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-slate-500" required>
+                    <input type="text" id="item-category" placeholder="Категория (напр. Напитки)" class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-slate-500" required>
+                    <input type="number" step="0.01" id="item-price" placeholder="Цена в € (напр. 4.50)" class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-slate-500" required>
+                    <input type="text" id="item-desc" placeholder="Описание (съставки, грамаж)" class="md:col-span-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-slate-500">
+                    <input type="text" id="item-image" placeholder="Линк към снимка (опционално)" class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-slate-500">
+                    <button type="submit" class="md:col-span-3 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-xl text-sm transition shadow-xs cursor-pointer">
+                        ➕ Добави към менюто
+                    </button>
+                </form>
             </div>
-        </section>
 
-        <section class="bg-white p-5 rounded-xl shadow-sm mb-6">
-            <h2 class="text-lg font-bold mb-3 text-gray-700">Настройки на заведението</h2>
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Име на ресторанта / кафето</label>
-                <div class="flex gap-2">
-                    <input type="text" id="restaurant-name-input" class="flex-1 border p-2 rounded-lg text-sm focus:outline-amber-600" placeholder="Въведете име...">
-                    <button onclick="saveRestaurantName()" class="bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-amber-700">Запази</button>
+            <!-- СПИСЪК / ТАБЛИЦА С УПРАВЛЕНИЕ -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-4 bg-slate-50 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-xs font-black text-slate-700 uppercase tracking-wider">Текущи артикули в менюто</h3>
+                    <span id="items-count" class="text-[10px] bg-slate-200 text-slate-700 font-bold px-2 py-0.5 rounded-full">0 позиции</span>
                 </div>
-            </div>
-        </section>
-
-        <section class="bg-white p-5 rounded-xl shadow-sm mb-6">
-            <h2 class="text-lg font-bold mb-1 text-gray-700">Импорт от Excel / CSV файл</h2>
-            <p class="text-xs text-gray-500 mb-4">Качете файл, за да заредите цялото меню наведнъж.</p>
-            <div class="flex flex-col gap-3 p-4 bg-amber-50 rounded-xl border border-amber-200">
-                <input type="file" id="file-import" accept=".xlsx, .xls, .csv" class="text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-amber-600 file:text-white hover:file:bg-amber-700 cursor-pointer">
-                <div class="flex justify-between items-center mt-2">
-                    <button onclick="importFile()" class="bg-gray-800 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-gray-700">Зареди данните от файла</button>
-                    <button onclick="downloadTemplate()" class="text-amber-700 hover:underline text-xs font-semibold">⬇ Свали примерен CSV шаблон</button>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-50 text-[11px] font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                            <tr>
+                                <th class="p-3">Артикул</th>
+                                <th class="p-3">Категория</th>
+                                <th class="p-3">Цена</th>
+                                <th class="p-3 text-center">Статус</th>
+                                <th class="p-3 text-right">Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-items-table" class="divide-y divide-gray-100">
+                            <!-- Редовете ще се генерират динамично тук -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </section>
 
-        <section class="bg-white p-5 rounded-xl shadow-sm mb-6">
-            <h2 class="text-lg font-bold mb-1 text-gray-700">Автоматичен генератор на меню</h2>
-            <div class="flex flex-wrap gap-2">
-                <button onclick="generateBuiltInTemplate('cafe')" class="bg-amber-100 text-amber-800 hover:bg-amber-200 text-xs font-bold px-3 py-2 rounded-lg transition">☕ Зареди шаблон за Кафене</button>
-                <button onclick="generateBuiltInTemplate('restaurant')" class="bg-blue-100 text-blue-800 hover:bg-blue-200 text-xs font-bold px-3 py-2 rounded-lg transition">🍔 Зареди шаблон за Ресторант</button>
-                <button onclick="clearAllMenu()" class="bg-red-50 text-red-600 hover:bg-red-100 text-xs font-medium px-3 py-2 rounded-lg transition ml-auto">🗑 Изчисти цялото меню</button>
-            </div>
-        </section>
-
-        <section class="bg-white p-5 rounded-xl shadow-sm mb-6">
-            <h2 id="form-title" class="text-lg font-bold mb-4 text-gray-700">Добави артикул ръчно</h2>
-            <form id="add-dish-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="hidden" id="edit-item-id" value="">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Име на ястието</label>
-                    <input type="text" id="dish-name" required class="w-full border p-2 rounded-lg text-sm focus:outline-amber-600">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Категория</label>
-                    <select id="dish-category" class="w-full border p-2 rounded-lg text-sm focus:outline-amber-600">
-                        <option value="Топли напитки">Топли напитки</option>
-                        <option value="Напитки">Студени напитки</option>
-                        <option value="Салати">Салати</option>
-                        <option value="Основни">Основни</option>
-                        <option value="Десерти">Десерти</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Цена (&euro;)</label>
-                    <input type="number" step="0.01" id="dish-price" required class="w-full border p-2 rounded-lg text-sm focus:outline-amber-600">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Линк към снимка</label>
-                    <input type="url" id="dish-image" value="https://via.placeholder.com/150" class="w-full border p-2 rounded-lg text-sm focus:outline-amber-600">
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Описание / Алергени</label>
-                    <textarea id="dish-desc" rows="2" class="w-full border p-2 rounded-lg text-sm focus:outline-amber-600"></textarea>
-                </div>
-                <div class="md:col-span-2 flex gap-2">
-                    <button type="submit" id="submit-btn" class="flex-1 bg-amber-600 text-white font-bold py-2 rounded-lg hover:bg-amber-700 transition">Добави в менюто</button>
-                    <button type="button" id="cancel-edit-btn" onclick="cancelEditing()" class="hidden bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition">Отказ</button>
-                </div>
-            </form>
-        </section>
-
-        <section class="bg-white p-5 rounded-xl shadow-sm mb-12">
-            <h2 class="text-lg font-bold mb-4 text-gray-700">Текущи артикули</h2>
-            <div id="admin-menu-list" class="divide-y divide-gray-100"></div>
-        </section>
-    </div>
+        </div>
+    </main>
 
     <script src="admin.js"></script>
 </body>
